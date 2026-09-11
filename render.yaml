@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: rank-chat-voice
+    runtime: node
+    rootDir: voice-server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: VOICE_SECRET
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: RATE_LIMIT_MAX
+        value: "50"
+    plan: free
