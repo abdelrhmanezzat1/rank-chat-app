@@ -23,6 +23,16 @@ if (!$stmt->fetch()) { http_response_code(403); die(json_encode(['error' => 'غ�
 
 $stmt = db()->prepare("INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)");
 $stmt->execute([$convId, $me['id'], $content]);
+$msgId = db()->lastInsertId();
+
+// Get recipient (other user in conversation)
+$stmt = db()->prepare("SELECT IF(user_a = ?, user_b, user_a) AS recipient_id FROM conversations WHERE id = ?");
+$stmt->execute([$me['id'], $convId]);
+$recipient = $stmt->fetch();
+if ($recipient && $recipient['recipient_id'] != $me['id']) {
+    db()->prepare("INSERT INTO notifications (user_id, from_user_id, type, title, body, reference_id, reference_type) VALUES (?, ?, 'message', 'رسالة جديدة', ?, ?, 'conversation')")
+        ->execute([$recipient['recipient_id'], $me['id'], mb_substr($content, 0, 100), $convId]);
+}
 
 // Award 1 coin per message (cooldown enforced by earn_coins.php)
 $cd = db()->prepare("SELECT created_at FROM transactions WHERE user_id = ? AND source = 'message' ORDER BY created_at DESC LIMIT 1");
@@ -38,4 +48,4 @@ if ($elapsed >= 30) {
     }
 }
 
-echo json_encode(['success' => true, 'id' => db()->lastInsertId(), 'sent_at' => date('Y-m-d H:i:s')]);
+echo json_encode(['success' => true, 'id' => $msgId, 'sent_at' => date('Y-m-d H:i:s')]);

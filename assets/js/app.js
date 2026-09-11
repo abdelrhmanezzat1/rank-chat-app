@@ -34,9 +34,112 @@ async function api(path, opts = {}) {
 
 /* ===== Heartbeat ===== */
 async function heartbeat(){
-  try { await api('heartbeat.php'); } catch(e){ console.error('[Heartbeat] failed:', e); }
+  try {
+    await api('heartbeat.php');
+    checkNotifications();
+  } catch(e){ console.error('[Heartbeat] failed:', e); }
 }
 heartbeat();
+
+/* ===== Notifications ===== */
+let notifPanelOpen = false;
+
+document.getElementById('notif-bell').addEventListener('click', toggleNotifPanel);
+document.getElementById('notif-mark-all').addEventListener('click', markAllRead);
+
+function toggleNotifPanel(){
+  const panel = document.getElementById('notif-panel');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    notifPanelOpen = false;
+  } else {
+    panel.classList.add('open');
+    notifPanelOpen = true;
+    loadNotifications();
+  }
+}
+
+async function checkNotifications(){
+  try {
+    const res = await api('notifications.php?action=count');
+    const badge = document.getElementById('notif-badge');
+    if (res.count > 0) {
+      badge.textContent = res.count > 99 ? '99+' : res.count;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch(e){}
+}
+
+async function loadNotifications(){
+  const list = document.getElementById('notif-list');
+  try {
+    const res = await api('notifications.php');
+    if (res.notifications.length === 0) {
+      list.innerHTML = '<div class="notif-empty">مفيش إشعارات</div>';
+      return;
+    }
+    list.innerHTML = '';
+    res.notifications.forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'notif-item' + (n.is_read == 0 ? ' unread' : '');
+
+      const icons = { message:'💬', gift:'🎁', follow:'👤', mic:'🎙' };
+      const icon = icons[n.type] || '🔔';
+      const timeAgo = timeSince(new Date(n.created_at));
+
+      div.innerHTML = `
+        <div class="notif-icon">${icon}</div>
+        <div class="notif-body">
+          <div class="notif-title">${esc(n.title)}</div>
+          <div class="notif-text">${esc(n.body || '')}</div>
+          <div class="notif-time">${timeAgo}</div>
+        </div>
+      `;
+      div.addEventListener('click', () => {
+        if (n.is_read == 0) {
+          api('notifications.php', { method:'POST', body: JSON.stringify({ action:'read', id:n.id }) });
+          div.classList.remove('unread');
+          checkNotifications();
+        }
+        // Navigate based on type
+        if (n.type === 'message' && n.reference_type === 'conversation') {
+          // Could open the chat - for now just close panel
+          document.getElementById('notif-panel').classList.remove('open');
+        } else if (n.type === 'follow' && n.from_user_id) {
+          openProfile(n.from_user_id);
+          document.getElementById('notif-panel').classList.remove('open');
+        } else if (n.type === 'gift' && n.from_user_id) {
+          openProfile(n.from_user_id);
+          document.getElementById('notif-panel').classList.remove('open');
+        }
+      });
+      list.appendChild(div);
+    });
+  } catch(e){
+    list.innerHTML = '<div class="notif-empty">حدث خطأ</div>';
+  }
+}
+
+async function markAllRead(){
+  try {
+    await api('notifications.php', { method:'POST', body: JSON.stringify({ action:'read_all' }) });
+    checkNotifications();
+    loadNotifications();
+  } catch(e){}
+}
+
+function timeSince(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  if (seconds < 60) return 'الآن';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} دقيقة`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ساعة`;
+  const days = Math.floor(hours / 24);
+  return `${days} يوم`;
+}
 
 /* ===== Users list ===== */
 async function loadUsers(){

@@ -35,6 +35,10 @@ if ($stmt->fetch()) {
 db()->prepare("INSERT INTO follows (follower_id, following_id) VALUES (?, ?)")
     ->execute([$me['id'], $targetId]);
 
+// Notify target
+db()->prepare("INSERT INTO notifications (user_id, from_user_id, type, title, body, reference_type) VALUES (?, ?, 'follow', 'متاب جديد', ?, 'user')")
+    ->execute([$targetId, $me['id'], $me['username'] . ' بدأ يتابعك']);
+
 // Check if mutual (they follow us too)
 $stmt = db()->prepare("SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?");
 $stmt->execute([$targetId, $me['id']]);

@@ -60,6 +60,10 @@ db()->prepare("INSERT INTO transactions (user_id, type, amount, source, referenc
 db()->prepare("INSERT INTO gift_sends (sender_id, receiver_id, gift_id, room, message) VALUES (?, ?, ?, ?, ?)")
     ->execute([$sender['id'], $receiverId, $giftId, $in['room'] ?? null, $message]);
 
+// Notify receiver
+db()->prepare("INSERT INTO notifications (user_id, from_user_id, type, title, body, reference_id, reference_type) VALUES (?, ?, 'gift', 'هدية جديدة', ?, ?, 'gift')")
+    ->execute([$receiverId, $sender['id'], $gift['icon'] . ' ' . $gift['name'], $giftId]);
+
 // Update sender XP
 db()->prepare("UPDATE users SET xp = xp + ? WHERE id = ?")->execute([1, $sender['id']]);
 

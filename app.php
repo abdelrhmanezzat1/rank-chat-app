@@ -33,6 +33,10 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
           <p><span id="online-count">0</span> متصل الآن</p>
         </div>
       </div>
+      <div class="notif-bell" id="notif-bell" title="الإشعارات">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+      </div>
       <div class="search" style="display:none">
         <input type="text" id="search-input" placeholder="ابحث عن عضو…">
       </div>
@@ -159,6 +163,17 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
       </div>
     </div>
     <div class="profile-content" id="profile-content">
+      <div class="loading-hint">جاري التحميل…</div>
+    </div>
+  </div>
+
+  <!-- ===== Notification Panel ===== -->
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-panel-header">
+      <span>الإشعارات</span>
+      <div class="notif-mark-all" id="notif-mark-all">تعيين الكل كمقروء</div>
+    </div>
+    <div class="notif-list" id="notif-list">
       <div class="loading-hint">جاري التحميل…</div>
     </div>
   </div>
