@@ -4,11 +4,15 @@ require_once __DIR__ . '/db.php';
 // ── Secure session cookie settings ──────────────────────────────────────
 // SameSite=Lax (not Strict) because the app redirects from index.php → app.php
 // on same-site navigation. Strict would break that flow.
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
 session_set_cookie_params([
     'lifetime' => 0,           // until browser closes
     'path' => '/',
     'domain' => '',
-    'secure' => true,          // HTTPS only
+    'secure' => $isHttps,     // HTTPS in production, HTTP in dev
     'httponly' => true,        // no JS access
     'samesite' => 'Lax',      // allows same-site redirects, blocks cross-site POST
 ]);
