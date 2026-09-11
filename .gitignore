@@ -1,0 +1,19 @@
+# Environment files (contain secrets)
+.env
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# OS files
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# PHP
+vendor/
+composer.lock
