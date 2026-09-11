@@ -26,7 +26,7 @@ if (!$conv) {
     $convId = $conv['id'];
 }
 
-$stmt = db()->prepare("SELECT id, sender_id, content, sent_at FROM messages WHERE conversation_id = ? ORDER BY id ASC");
+$stmt = db()->prepare("SELECT m.id, m.sender_id, m.content, m.sent_at, m.effect_id, me.css_class AS effect_css, me.icon AS effect_icon FROM messages m LEFT JOIN message_effects me ON m.effect_id = me.id WHERE m.conversation_id = ? ORDER BY m.id ASC");
 $stmt->execute([$convId]);
 $messages = $stmt->fetchAll();
 

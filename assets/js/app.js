@@ -338,7 +338,9 @@ function renderMessages(messages){
 function appendBubble(m){
   const body = document.getElementById('chat-body');
   const bubble = document.createElement('div');
-  bubble.className = 'bubble ' + (m.sender_id == ME_ID ? 'out' : 'in');
+  let classes = 'bubble ' + (m.sender_id == ME_ID ? 'out' : 'in');
+  if (m.effect_css) classes += ' ' + m.effect_css;
+  bubble.className = classes;
   bubble.textContent = m.content;
   body.appendChild(bubble);
   body.scrollTop = body.scrollHeight;
@@ -450,16 +452,83 @@ async function sendGift(gift){
 document.getElementById('chat-send').addEventListener('click', sendMessage);
 document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
 
+let selectedEffectId = null;
+let myEffects = [];
+
 async function sendMessage(){
   const input = document.getElementById('chat-input');
   const content = input.value.trim();
   if (!content || !activeConversation) return;
   input.value = '';
   try {
-    const res = await api('send_message.php', { method: 'POST', body: JSON.stringify({ conversation_id: activeConversation.id, content }) });
-    appendBubble({ sender_id: ME_ID, content });
+    const body = { conversation_id: activeConversation.id, content };
+    if (selectedEffectId) body.effect_id = selectedEffectId;
+    const res = await api('send_message.php', { method: 'POST', body: JSON.stringify(body) });
+    appendBubble({ sender_id: ME_ID, content, effect_id: selectedEffectId, effect_css: myEffects.find(e => e.id == selectedEffectId)?.css_class });
     activeConversation.lastId = res.id;
+    // Reset effect after sending
+    selectedEffectId = null;
+    document.querySelectorAll('.effect-chip').forEach(c => c.classList.remove('active'));
+    document.getElementById('effect-selector').classList.remove('open');
   } catch(e){}
+}
+
+/* ===== Effect Selector ===== */
+document.getElementById('chat-effect-btn').addEventListener('click', toggleEffectSelector);
+
+function toggleEffectSelector(){
+  const sel = document.getElementById('effect-selector');
+  if (sel.classList.contains('open')) {
+    sel.classList.remove('open');
+  } else {
+    sel.classList.add('open');
+    loadEffects();
+  }
+}
+
+async function loadEffects(){
+  try {
+    myEffects = await api('effects.php');
+    renderEffects();
+  } catch(e){}
+}
+
+function renderEffects(){
+  const grid = document.getElementById('effect-grid');
+  grid.innerHTML = '';
+  myEffects.forEach(e => {
+    const chip = document.createElement('div');
+    chip.className = 'effect-chip' + (e.owned ? '' : ' locked') + (selectedEffectId == e.id ? ' active' : '');
+    chip.innerHTML = `
+      <div class="effect-icon">${e.icon}</div>
+      <div class="effect-name">${esc(e.name)}</div>
+      ${e.owned ? '' : `<div class="effect-price">${e.price} 🪙</div>`}
+    `;
+    if (e.owned) {
+      chip.addEventListener('click', () => {
+        if (selectedEffectId == e.id) {
+          selectedEffectId = null;
+          chip.classList.remove('active');
+        } else {
+          selectedEffectId = e.id;
+          document.querySelectorAll('.effect-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+        }
+      });
+    } else {
+      chip.addEventListener('click', async () => {
+        if (confirm(`شراء تأثير "${e.name}" بـ ${e.price} 🪙؟`)) {
+          try {
+            await api('buy_effect.php', { method:'POST', body: JSON.stringify({ effect_id: e.id }) });
+            const me = await api('me.php');
+            document.getElementById('my-coins').textContent = `${me.coins} 🪙`;
+            loadEffects();
+          } catch(err){ alert(err.message); }
+        }
+      });
+    }
+    grid.appendChild(chip);
+  });
 }
 
 /* ===== Store (tabbed) ===== */

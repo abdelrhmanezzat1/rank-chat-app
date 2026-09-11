@@ -401,6 +401,106 @@ body{
 .notif-item .notif-time{ font-size:10px; color:var(--muted-2); margin-top:3px; }
 .notif-empty{ padding:32px 16px; text-align:center; color:var(--muted); font-size:13px; }
 
+/* Message Effects */
+.bubble.effect-fire{
+  background:linear-gradient(135deg, #FF5C7A, #FF2D55) !important;
+  color:#fff !important; position:relative; overflow:hidden;
+  animation:fireGlow 2s ease-in-out infinite;
+}
+@keyframes fireGlow{
+  0%,100%{ box-shadow:0 0 8px rgba(255,45,85,.3); }
+  50%{ box-shadow:0 0 16px rgba(255,45,85,.5); }
+}
+.bubble.effect-glow{
+  box-shadow:0 0 12px rgba(255,197,74,.4), 0 0 24px rgba(255,197,74,.2) !important;
+  border-color:var(--gold) !important;
+}
+.bubble.effect-rain{
+  position:relative; overflow:hidden;
+  background:linear-gradient(180deg, rgba(74,158,255,.15), transparent) !important;
+}
+.bubble.effect-rain::after{
+  content:'💧 💧 💧'; position:absolute; bottom:0; left:0; right:0;
+  font-size:8px; animation:rainFall 1.5s linear infinite; opacity:.6;
+}
+@keyframes rainFall{
+  0%{ transform:translateY(-10px); opacity:0; }
+  50%{ opacity:.6; }
+  100%{ transform:translateY(20px); opacity:0; }
+}
+.bubble.effect-stardust{
+  position:relative; overflow:hidden;
+  border-color:#FFC94A !important;
+}
+.bubble.effect-stardust::after{
+  content:'⭐'; position:absolute; top:2px; right:4px;
+  font-size:10px; animation:stardustSpin 3s linear infinite;
+}
+@keyframes stardustSpin{
+  0%{ transform:rotate(0deg) scale(1); }
+  50%{ transform:rotate(180deg) scale(1.3); }
+  100%{ transform:rotate(360deg) scale(1); }
+}
+.bubble.effect-float{
+  animation:floatMsg 3s ease-in-out infinite;
+}
+@keyframes floatMsg{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-4px); }
+}
+.bubble.effect-rainbow{
+  background:linear-gradient(90deg, #FF5C7A, #FFC94A, #6FE3E0, #A855F7, #FF5C7A) !important;
+  background-size:200% 100% !important;
+  animation:rainbowShift 3s linear infinite !important;
+  color:#fff !important; font-weight:700;
+}
+@keyframes rainbowShift{
+  0%{ background-position:0% 50%; }
+  100%{ background-position:200% 50%; }
+}
+.bubble.effect-explode{
+  animation:explodePulse 0.5s ease-out;
+  border-color:#FF5C7A !important;
+}
+@keyframes explodePulse{
+  0%{ transform:scale(1); }
+  30%{ transform:scale(1.05); }
+  100%{ transform:scale(1); }
+}
+.bubble.effect-diamond{
+  border-color:#6FE3E0 !important;
+  background:linear-gradient(135deg, rgba(111,227,224,.1), rgba(6,182,212,.05)) !important;
+  box-shadow:0 0 8px rgba(111,227,224,.3) !important;
+}
+.bubble.effect-diamond::before{
+  content:'💎'; position:absolute; top:-4px; right:-4px;
+  font-size:12px; animation:diamondPulse 2s ease-in-out infinite;
+}
+@keyframes diamondPulse{
+  0%,100%{ transform:scale(1); }
+  50%{ transform:scale(1.2); }
+}
+
+/* Effect selector in chat input */
+.effect-selector{
+  display:none; position:absolute; bottom:56px; left:0; right:0;
+  background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:8px; margin:0 8px; box-shadow:0 4px 16px rgba(0,0,0,.3);
+}
+.effect-selector.open{ display:block; }
+.effect-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; }
+.effect-chip{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:6px 4px; border-radius:8px; cursor:pointer;
+  background:var(--panel-2); border:1px solid var(--line); transition:all .15s;
+}
+.effect-chip:hover{ border-color:var(--gold); }
+.effect-chip.active{ border-color:var(--gold); background:rgba(255,197,74,.1); }
+.effect-chip.locked{ opacity:.4; cursor:not-allowed; }
+.effect-chip .effect-icon{ font-size:18px; }
+.effect-chip .effect-name{ font-size:9px; color:var(--muted); }
+.effect-chip .effect-price{ font-size:8px; color:var(--gold); }
+
 /* ===== Mic room - Large circular seats ===== */
 .mic-room-body{ flex:1; overflow-y:auto; padding:20px 16px; }
 .mic-room-header{ text-align:center; padding:8px 0 16px; }

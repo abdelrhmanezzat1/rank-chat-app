@@ -6,6 +6,7 @@ $me = require_login();
 $in = json_input();
 $convId = (int)($in['conversation_id'] ?? 0);
 $content = trim($in['content'] ?? '');
+$effectId = (int)($in['effect_id'] ?? 0);
 
 if ($convId <= 0 || $content === '') {
     http_response_code(422);
@@ -21,8 +22,18 @@ $stmt = db()->prepare("SELECT * FROM conversations WHERE id = ? AND (user_a = ? 
 $stmt->execute([$convId, $me['id'], $me['id']]);
 if (!$stmt->fetch()) { http_response_code(403); die(json_encode(['error' => 'غير مصرح'])); }
 
-$stmt = db()->prepare("INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)");
-$stmt->execute([$convId, $me['id'], $content]);
+// Validate effect if provided
+$validEffectId = null;
+if ($effectId > 0) {
+    $stmt = db()->prepare("SELECT 1 FROM user_effects WHERE user_id = ? AND effect_id = ?");
+    $stmt->execute([$me['id'], $effectId]);
+    if ($stmt->fetch()) {
+        $validEffectId = $effectId;
+    }
+}
+
+$stmt = db()->prepare("INSERT INTO messages (conversation_id, sender_id, content, effect_id) VALUES (?, ?, ?, ?)");
+$stmt->execute([$convId, $me['id'], $content, $validEffectId]);
 $msgId = db()->lastInsertId();
 
 // Get recipient (other user in conversation)
@@ -30,8 +41,10 @@ $stmt = db()->prepare("SELECT IF(user_a = ?, user_b, user_a) AS recipient_id FRO
 $stmt->execute([$me['id'], $convId]);
 $recipient = $stmt->fetch();
 if ($recipient && $recipient['recipient_id'] != $me['id']) {
+    $notifBody = mb_substr($content, 0, 100);
+    if ($validEffectId) $notifBody = '✨ ' . $notifBody;
     db()->prepare("INSERT INTO notifications (user_id, from_user_id, type, title, body, reference_id, reference_type) VALUES (?, ?, 'message', 'رسالة جديدة', ?, ?, 'conversation')")
-        ->execute([$recipient['recipient_id'], $me['id'], mb_substr($content, 0, 100), $convId]);
+        ->execute([$recipient['recipient_id'], $me['id'], $notifBody, $convId]);
 }
 
 // Award 1 coin per message (cooldown enforced by earn_coins.php)

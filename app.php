@@ -84,9 +84,15 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
       </div>
     </div>
     <div class="chat-body" id="chat-body"></div>
+    <div class="effect-selector" id="effect-selector">
+      <div class="effect-grid" id="effect-grid"></div>
+    </div>
     <div class="chat-input-bar">
       <div class="gift-btn" id="chat-gift-btn" title="إرسال هدية">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8v12"/><path d="M5 8c0-2.2 1.8-4 4-4h6c2.2 0 4 1.8 4 4"/><path d="M5 8h14"/></svg>
+      </div>
+      <div class="gift-btn" id="chat-effect-btn" title="تأثير الرسالة">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
       </div>
       <input type="text" id="chat-input" placeholder="اكتب رسالة…" maxlength="2000">
       <div class="send-btn" id="chat-send">
