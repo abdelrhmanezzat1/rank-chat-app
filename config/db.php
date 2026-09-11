@@ -31,15 +31,36 @@ function db() {
     static $pdo = null;
     if ($pdo === null) {
         try {
-            $pdo = new PDO(
-                "mysql:host=" . getenv('DB_HOST') . ";dbname=" . getenv('DB_NAME') . ";charset=utf8mb4",
-                getenv('DB_USER'),
-                getenv('DB_PASS'),
-                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
-            );
+            $host = getenv('DB_HOST');
+            $port = getenv('DB_PORT') ?: '3306';
+            $name = getenv('DB_NAME');
+            $user = getenv('DB_USER');
+            $pass = getenv('DB_PASS');
+
+            $dsn = "mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4";
+            $opts = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+            ];
+
+            // TiDB Cloud and other cloud DBs require SSL
+            $dbSslCa = getenv('DB_SSL_CA');
+            $dbSslEnabled = getenv('DB_SSL_ENABLED');
+            if ($dbSslEnabled === 'true' || $dbSslCa) {
+                $opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+                if ($dbSslCa && file_exists($dbSslCa)) {
+                    $opts[PDO::MYSQL_ATTR_SSL_CA] = $dbSslCa;
+                } else {
+                    // Force SSL by setting CA to empty string (mysqlnd requires this to enable SSL)
+                    $opts[PDO::MYSQL_ATTR_SSL_CA] = '';
+                }
+            }
+
+            $pdo = new PDO($dsn, $user, $pass, $opts);
         } catch (PDOException $e) {
             http_response_code(500);
-            die(json_encode(['error' => 'Database connection failed']));
+            die(json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]));
         }
     }
     return $pdo;

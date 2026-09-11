@@ -23,8 +23,12 @@ const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '50', 10); // msgs
 const MAX_PAYLOAD = 64 * 1024; // 64 KB
 
 // ── MySQL pool (for cleaning up mic_sessions on disconnect) ──────────────
-const pool = mysql.createPool({
+const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10);
+const DB_SSL_ENABLED = process.env.DB_SSL_ENABLED === 'true';
+
+const poolConfig = {
   host: DB_HOST,
+  port: DB_PORT,
   user: DB_USER,
   password: DB_PASS,
   database: DB_NAME,
@@ -32,7 +36,13 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 5,
   connectTimeout: 10000,
-});
+};
+
+if (DB_SSL_ENABLED) {
+  poolConfig.ssl = { rejectUnauthorized: false };
+}
+
+const pool = mysql.createPool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('[DB] Unexpected pool error (idle connection):', err.message);
