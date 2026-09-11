@@ -148,6 +148,21 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
     </div>
   </div>
 
+  <!-- ===== شاشة البروفايل ===== -->
+  <div class="chat-screen" id="profile-screen">
+    <div class="chat-topbar">
+      <div class="chat-back" id="profile-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="chat-title">
+        <div class="name" id="profile-title">بروفايل</div>
+      </div>
+    </div>
+    <div class="profile-content" id="profile-content">
+      <div class="loading-hint">جاري التحميل…</div>
+    </div>
+  </div>
+
 </div>
 
 <script src="assets/js/app.js"></script>

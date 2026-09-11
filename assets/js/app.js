@@ -149,6 +149,9 @@ function renderList(){
           </div>
           <div class="user-sub">${u.is_online == 1 ? (u.on_mic > 0 ? '🎙 على المايك' : 'متصل الآن') : 'غير متصل'}</div>
         </div>
+        <button class="user-profile-btn" onclick="event.stopPropagation(); openProfile(${u.id})" title="عرض البروفايل">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7"/></svg>
+        </button>
       `;
       row.addEventListener('click', () => openChat(u, rankColor));
       body.appendChild(row);
@@ -477,6 +480,141 @@ function renderStoreItems(){
 function showStoreError(msg) {
   const err = document.getElementById('store-error');
   if (err) { err.textContent = msg; err.style.display = 'block'; setTimeout(() => err.style.display = 'none', 3000); }
+}
+
+/* ===== Profile Screen ===== */
+document.getElementById('profile-back').addEventListener('click', () => document.getElementById('profile-screen').classList.remove('open'));
+
+async function openProfile(userId){
+  document.getElementById('profile-screen').classList.add('open');
+  document.getElementById('profile-content').innerHTML = '<div class="loading-hint">جاري التحميل…</div>';
+
+  try {
+    const data = await api(`profile.php?user_id=${userId}`);
+    renderProfile(data);
+  } catch(e){
+    document.getElementById('profile-content').innerHTML = '<div class="loading-hint">حدث خطأ</div>';
+  }
+}
+
+function renderProfile(data){
+  const { user, frame, we_follow, they_follow_us, is_mutual, is_self, recent_gifts } = data;
+  const el = document.getElementById('profile-content');
+
+  document.getElementById('profile-title').textContent = user.username;
+
+  const rankIcons = {
+    owner:'🛡️', admin:'⭐', manager:'🔧', diamond:'💎', gold:'🥇',
+    silver:'🥈', bronze:'🥉', 'golden-blue':'✨', normal:'👤'
+  };
+
+  const rankNames = {
+    owner:'المالك', admin:'مدير عام', manager:'مدير', diamond:'الماس', gold:'ذهبي',
+    silver:'فضي', bronze:'برونزي', 'golden-blue':'ذهبي أزرق', normal:'عادي'
+  };
+
+  const rankColors = {
+    owner:'#FF5C7A', admin:'#FFC94A', manager:'#6FE3E0', diamond:'#B9F2FF',
+    gold:'#FFC94A', silver:'#C0C0C0', bronze:'#CD7F32', 'golden-blue':'#FFC94A', member:'#8891A8'
+  };
+
+  const rc = user.rank_color || rankColors[user.rank_key] || '#8891A8';
+
+  let frameStyle = '';
+  if (frame) {
+    frameStyle = `border-color:${frame.gradient_from}; background:linear-gradient(135deg, ${frame.gradient_from}, ${frame.gradient_to});`;
+  }
+
+  const initial = (user.username || '').charAt(0).toUpperCase();
+
+  let actionsHtml = '';
+  if (!is_self) {
+    const followLabel = we_follow ? 'متابَع ✓' : 'متابعة';
+    const followClass = we_follow ? 'follow-btn following' : 'follow-btn';
+    actionsHtml = `
+      <div class="profile-actions">
+        <button class="${followClass}" id="profile-follow-btn" data-user-id="${user.id}" data-following="${we_follow ? 1 : 0}">
+          ${followLabel}
+        </button>
+        <button class="message-btn" onclick="startChat(${user.id}, '${esc(user.username)}', '${esc(user.username)}', '${esc(frame?.gradient_from || '#8891A8')}', '${esc(frame?.gradient_to || '#C3CADA')}'); document.getElementById('profile-screen').classList.remove('open');">
+          رسالة
+        </button>
+      </div>
+    `;
+  }
+
+  let giftsHtml = '';
+  if (recent_gifts.length > 0) {
+    giftsHtml = `
+      <div class="profile-gifts-title">الهدايا المستلمة (${user.gifts_received_count})</div>
+      <div class="profile-gifts">
+        ${recent_gifts.map(g => `
+          <div class="profile-gift-item">
+            <div class="gift-icon">${g.icon}</div>
+            <div class="gift-from">من ${esc(g.sender_name)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  el.innerHTML = `
+    <div class="profile-header">
+      <div class="profile-avatar" style="${frameStyle}">${initial}</div>
+      <div class="profile-name">${esc(user.username)}</div>
+      <div class="profile-username">@${esc(user.username)}</div>
+      <div class="profile-rank" style="background:${rc}22; color:${rc}; border:1px solid ${rc}44;">
+        ${user.rank_icon || '👤'} ${user.rank_label || user.rank_key}
+      </div>
+      <div class="profile-level">المستوى ${user.level} • ${user.xp} XP</div>
+    </div>
+
+    <div class="profile-stats">
+      <div class="profile-stat">
+        <div class="stat-val">${user.followers_count}</div>
+        <div class="stat-label">متابِعين</div>
+      </div>
+      <div class="profile-stat">
+        <div class="stat-val">${user.following_count}</div>
+        <div class="stat-label">يتابع</div>
+      </div>
+      <div class="profile-stat">
+        <div class="stat-val">${user.message_count}</div>
+        <div class="stat-label">رسالة</div>
+      </div>
+      <div class="profile-stat">
+        <div class="stat-val">${user.gifts_received_count}</div>
+        <div class="stat-label">هدية</div>
+      </div>
+    </div>
+
+    ${user.bio ? `<div class="profile-bio">${esc(user.bio)}</div>` : ''}
+
+    ${actionsHtml}
+
+    ${giftsHtml}
+  `;
+
+  // Follow button handler
+  const followBtn = document.getElementById('profile-follow-btn');
+  if (followBtn) {
+    followBtn.addEventListener('click', async () => {
+      const isFollowing = followBtn.dataset.following === '1';
+      try {
+        if (isFollowing) {
+          await api('unfollow.php', { method:'POST', body: JSON.stringify({ user_id: user.id }) });
+          followBtn.dataset.following = '0';
+          followBtn.textContent = 'متابعة';
+          followBtn.classList.remove('following');
+        } else {
+          const res = await api('follow.php', { method:'POST', body: JSON.stringify({ user_id: user.id }) });
+          followBtn.dataset.following = '1';
+          followBtn.textContent = 'متابَع ✓';
+          followBtn.classList.add('following');
+        }
+      } catch(e){}
+    });
+  }
 }
 
 /* ===== Mic room (large circular seats) ===== */
