@@ -203,6 +203,148 @@ async function modAction(action, userId, username, duration){
   } catch(e){ alert(e.message); }
 }
 
+/* ===== Admin Panel ===== */
+let adminTab = 'stats';
+
+document.getElementById('admin-back').addEventListener('click', () => document.getElementById('admin-screen').classList.remove('open'));
+
+const adminBtn = document.getElementById('admin-btn');
+if (adminBtn) {
+  adminBtn.addEventListener('click', openAdminPanel);
+}
+
+document.querySelectorAll('[data-admin-tab]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-admin-tab]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    adminTab = tab.dataset.adminTab;
+    loadAdminTab();
+  });
+});
+
+async function openAdminPanel(){
+  document.getElementById('admin-screen').classList.add('open');
+  loadAdminTab();
+}
+
+async function loadAdminTab(){
+  const content = document.getElementById('admin-content');
+  content.innerHTML = '<div class="loading-hint">جاري التحميل…</div>';
+
+  try {
+    const data = await api(`admin_panel.php?tab=${adminTab}`);
+    if (adminTab === 'stats') renderAdminStats(data, content);
+    else if (adminTab === 'users') renderAdminUsers(data, content);
+    else if (adminTab === 'reports') renderAdminReports(data, content);
+    else if (adminTab === 'mod_log') renderAdminModLog(data, content);
+  } catch(e){
+    content.innerHTML = '<div class="loading-hint">حدث خطأ</div>';
+  }
+}
+
+function renderAdminStats(data, el){
+  el.innerHTML = `
+    <div class="admin-stats">
+      <div class="admin-stat"><div class="stat-val">${data.total_users}</div><div class="stat-label">أعضاء</div></div>
+      <div class="admin-stat"><div class="stat-val">${data.online_users}</div><div class="stat-label">متصل</div></div>
+      <div class="admin-stat"><div class="stat-val">${data.mic_sessions}</div><div class="stat-label">على المايك</div></div>
+      <div class="admin-stat"><div class="stat-val">${data.total_messages}</div><div class="stat-label">رسائل</div></div>
+      <div class="admin-stat"><div class="stat-val">${data.messages_24h}</div><div class="stat-label">رسائل (24 ساعة)</div></div>
+      <div class="admin-stat"><div class="stat-val">${data.total_gifts}</div><div class="stat-label">هدايا</div></div>
+      <div class="admin-stat"><div class="stat-val">${data.total_coins_earned}</div><div class="stat-label">كوينز مكتسبة</div></div>
+      <div class="admin-stat"><div class="stat-val">${data.total_coins_spent}</div><div class="stat-label">كوينز منفقة</div></div>
+      <div class="admin-stat"><div class="stat-val">${data.pending_reports}</div><div class="stat-label">بلاغات معلقة</div></div>
+    </div>
+    <h3 style="font-size:13px;color:var(--text);margin-bottom:8px;">توزيع الرتب</h3>
+    ${data.rank_distribution.map(r => `
+      <div class="admin-rank-bar">
+        <div class="rank-color" style="background:${r.color_hex}"></div>
+        <div class="rank-name">${esc(r.label)}</div>
+        <div class="rank-count">${r.cnt}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function renderAdminUsers(data, el){
+  const ranks = ['owner','admin','manager','diamond','gold','silver','bronze','golden-blue','member'];
+  const rankLabels = {owner:'المالك',admin:'مدير عام',manager:'مدير',diamond:'الماس',gold:'ذهبي',silver:'فضي',bronze:'برونزي','golden-blue':'ذهبي أزرق',member:'عضو'};
+
+  el.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <input type="text" id="admin-user-search" placeholder="بحث بالاسم…" style="width:100%;padding:8px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;color:var(--text);font-size:13px;">
+    </div>
+    <div id="admin-user-list">
+      ${data.users.map(u => `
+        <div class="admin-user-row">
+          <div class="au-name">${esc(u.username)} ${u.is_online == 1 ? '🟢' : ''} ${u.is_muted == 1 ? '🔇' : ''}</div>
+          <div class="au-rank" style="background:${u.color_hex}22;color:${u.color_hex}">${esc(u.rank_label)}</div>
+          ${ME_RANK === 'owner' ? `
+          <select onchange="changeRank(${u.id}, this.value)">
+            ${ranks.map(r => `<option value="${r}" ${u.rank_key === r ? 'selected' : ''}>${rankLabels[r]}</option>`).join('')}
+          </select>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  document.getElementById('admin-user-search').addEventListener('input', async (e) => {
+    const search = e.target.value;
+    const res = await api(`admin_panel.php?tab=users&search=${encodeURIComponent(search)}`);
+    renderAdminUsers(res, el);
+  });
+}
+
+async function changeRank(userId, rank){
+  try {
+    await api('admin_rank.php', { method:'POST', body: JSON.stringify({ user_id: userId, rank }) });
+    loadAdminTab();
+  } catch(e){ alert(e.message); }
+}
+
+function renderAdminReports(data, el){
+  if (data.length === 0) {
+    el.innerHTML = '<div class="loading-hint">مفيش بلاغات</div>';
+    return;
+  }
+  el.innerHTML = data.map(r => `
+    <div class="admin-report-row">
+      <div class="ar-header">
+        <span class="ar-users">${esc(r.reporter_name)} بلّغ عن ${esc(r.reported_name)}</span>
+        <span class="ar-time">${timeSince(new Date(r.created_at))}</span>
+      </div>
+      <div class="ar-reason">${esc(r.reason)}</div>
+      <div style="font-size:10px;color:var(--muted-2);margin-top:2px;">الحالة: ${r.status}</div>
+      ${r.status === 'pending' ? `
+      <div class="ar-actions">
+        <button class="ar-dismiss" onclick="handleReport(${r.id}, 'dismiss_report')">تجاهل</button>
+        <button class="ar-action" onclick="handleReport(${r.id}, 'action_report')">اتخذ إجراء</button>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function handleReport(reportId, action){
+  try {
+    await api('admin_panel.php', { method:'POST', body: JSON.stringify({ action, report_id: reportId }) });
+    loadAdminTab();
+  } catch(e){ alert(e.message); }
+}
+
+function renderAdminModLog(data, el){
+  if (data.length === 0) {
+    el.innerHTML = '<div class="loading-hint">مفيش إجراءات</div>';
+    return;
+  }
+  el.innerHTML = data.map(l => `
+    <div class="admin-modlog-row">
+      <span class="ml-action ${l.action}">${l.action}</span>
+      <span style="flex:1;color:var(--text)">${esc(l.moderator_name)} → ${esc(l.target_name)}</span>
+      <span>${timeSince(new Date(l.created_at))}</span>
+    </div>
+  `).join('');
+}
+
 /* ===== Users list ===== */
 async function loadUsers(){
   try {

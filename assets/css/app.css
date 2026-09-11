@@ -233,6 +233,60 @@ body{
   display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:299;
 }
 .mod-overlay.open{ display:block; }
+
+/* Admin Panel */
+.admin-tabs{ display:flex; gap:4px; padding:8px 14px; overflow-x:auto; flex-shrink:0; }
+.admin-content{ flex:1; overflow-y:auto; padding:14px; }
+.admin-stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:16px; }
+.admin-stat{
+  background:var(--panel-2); border-radius:12px; padding:12px 8px; text-align:center;
+}
+.admin-stat .stat-val{ font-size:18px; font-weight:800; color:var(--text); }
+.admin-stat .stat-label{ font-size:10px; color:var(--muted); margin-top:2px; }
+.admin-rank-bar{
+  display:flex; align-items:center; gap:8px; padding:8px 0;
+  border-bottom:1px solid var(--line);
+}
+.admin-rank-bar .rank-color{ width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+.admin-rank-bar .rank-name{ font-size:12px; color:var(--text); flex:1; }
+.admin-rank-bar .rank-count{ font-size:12px; font-weight:700; color:var(--text); }
+.admin-user-row{
+  display:flex; align-items:center; gap:8px; padding:10px 0;
+  border-bottom:1px solid var(--line);
+}
+.admin-user-row .au-name{ flex:1; font-size:13px; color:var(--text); }
+.admin-user-row .au-rank{
+  padding:2px 8px; border-radius:6px; font-size:10px; font-weight:600;
+}
+.admin-user-row select{
+  background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
+  padding:4px 8px; font-size:11px; color:var(--text); cursor:pointer;
+}
+.admin-report-row{
+  padding:10px 0; border-bottom:1px solid var(--line);
+}
+.admin-report-row .ar-header{ display:flex; justify-content:space-between; align-items:center; }
+.admin-report-row .ar-users{ font-size:12px; font-weight:600; color:var(--text); }
+.admin-report-row .ar-time{ font-size:10px; color:var(--muted); }
+.admin-report-row .ar-reason{ font-size:11px; color:var(--muted); margin-top:4px; }
+.admin-report-row .ar-actions{ display:flex; gap:6px; margin-top:6px; }
+.admin-report-row .ar-actions button{
+  padding:4px 10px; border-radius:6px; border:none; font-size:10px;
+  font-weight:600; cursor:pointer;
+}
+.admin-report-row .ar-dismiss{ background:var(--panel-2); color:var(--text); }
+.admin-report-row .ar-action{ background:var(--admin); color:#0D1220; }
+.admin-modlog-row{
+  display:flex; gap:8px; padding:8px 0; border-bottom:1px solid var(--line);
+  font-size:11px; color:var(--muted);
+}
+.admin-modlog-row .ml-action{
+  padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600;
+  background:var(--panel-2); color:var(--text); flex-shrink:0;
+}
+.admin-modlog-row .ml-action.mute{ color:var(--gold); }
+.admin-modlog-row .ml-action.kick{ color:var(--owner); }
+.admin-modlog-row .ml-action.ban{ color:#FF2D55; }
 .user-meta{ text-align:left; flex-shrink:0; font-size:11px; color:var(--muted-2); }
 
 .store-chip{
