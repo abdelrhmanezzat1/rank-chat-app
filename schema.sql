@@ -34,6 +34,15 @@ CREATE TABLE users (
   is_online TINYINT(1) NOT NULL DEFAULT 0,
   last_seen DATETIME NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  level INT NOT NULL DEFAULT 1,
+  xp INT NOT NULL DEFAULT 0,
+  country_code VARCHAR(2) NULL,
+  animated_name TINYINT(1) NOT NULL DEFAULT 0,
+  name_gradient_from VARCHAR(7) NULL,
+  name_gradient_to VARCHAR(7) NULL,
+  row_border_from VARCHAR(7) NULL,
+  row_border_to VARCHAR(7) NULL,
+  row_border_glow TINYINT(1) NOT NULL DEFAULT 0,
   FOREIGN KEY (rank_key) REFERENCES ranks(`key`)
 );
 
@@ -77,15 +86,19 @@ CREATE TABLE frames (
   gradient_from VARCHAR(10) NOT NULL,
   gradient_to VARCHAR(10) NOT NULL,
   price INT NOT NULL,
-  rarity ENUM('common','rare','epic','legendary') NOT NULL DEFAULT 'common'
+  rarity ENUM('common','rare','epic','legendary') NOT NULL DEFAULT 'common',
+  row_from VARCHAR(10) NULL,
+  row_to VARCHAR(10) NULL,
+  bubble_from VARCHAR(10) NULL,
+  bubble_to VARCHAR(10) NULL
 );
 
-INSERT INTO frames (name, gradient_from, gradient_to, price, rarity) VALUES
-('الإطار الفضي',    '#C3CADA', '#8891A8', 0,    'common'),
-('الإطار البرونزي',  '#D48A5F', '#8B5A3C', 150,  'common'),
-('موجة نيون',        '#6FE3E0', '#7C9CFF', 400,  'rare'),
-('لهب ذهبي',         '#FFC94A', '#FF5C7A', 900,  'epic'),
-('تاج الأسطورة',     '#FF5C7A', '#6FE3E0', 2000, 'legendary');
+INSERT INTO frames (name, gradient_from, gradient_to, price, rarity, row_from, row_to, bubble_from, bubble_to) VALUES
+('الإطار الفضي',    '#C3CADA', '#8891A8', 0,    'common',  '#C3CADA', '#8891A8', '#C3CADA', '#8891A8'),
+('الإطار البرونزي',  '#D48A5F', '#8B5A3C', 150,  'common',  '#D48A5F', '#8B5A3C', '#D48A5F', '#8B5A3C'),
+('موجة نيون',        '#6FE3E0', '#7C9CFF', 400,  'rare',    '#6FE3E0', '#7C9CFF', '#6FE3E0', '#7C9CFF'),
+('لهب ذهبي',         '#FFC94A', '#FF5C7A', 900,  'epic',    '#FFC94A', '#FF5C7A', '#FFC94A', '#FF5C7A'),
+('تاج الأسطورة',     '#FF5C7A', '#6FE3E0', 2000, 'legendary','#FF5C7A', '#6FE3E0', '#FF5C7A', '#6FE3E0');
 
 -- Which user owns / has equipped which frame
 CREATE TABLE user_frames (

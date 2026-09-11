@@ -33,10 +33,16 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
           <p><span id="online-count">0</span> متصل الآن</p>
         </div>
       </div>
-      <div class="search">
+      <div class="search" style="display:none">
         <input type="text" id="search-input" placeholder="ابحث عن عضو…">
       </div>
       <div class="tabs">
+        <div class="tab sub-tab active" data-tab="members">الأعضاء</div>
+        <div class="tab sub-tab" data-tab="voice">المايك</div>
+        <div class="tab sub-tab" data-tab="top">الأكثر ترتيباً</div>
+        <div class="tab sub-tab" data-tab="search">بحث</div>
+      </div>
+      <div class="tabs" style="margin-top:6px;">
         <div class="tab active" data-filter="all">الكل</div>
         <div class="tab" data-filter="online">متصل</div>
       </div>
