@@ -21,6 +21,29 @@ let collapsedSections = new Set();
 
 function initials(name){ return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0,2); }
 
+/* ===== Toast Notifications ===== */
+function showToast(msg, type = 'info', duration = 3000){
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+/* ===== Skeleton Loader ===== */
+function skeleton(rows = 3){
+  return `<div style="padding:16px">${Array(rows).fill('<div class="skeleton skeleton-text"></div>').join('')}<div class="skeleton skeleton-text short"></div></div>`;
+}
+
 async function api(path, opts = {}) {
   const res = await fetch(`api/${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -518,7 +541,7 @@ async function openChat(user, rankColor){
   document.getElementById('chat-avatar').style.borderColor = rankColor;
   document.getElementById('chat-name').textContent = user.username;
   document.getElementById('chat-status').textContent = user.is_online == 1 ? 'متصل الآن' : 'غير متصل';
-  document.getElementById('chat-body').innerHTML = '<div class="loading-hint">جاري تحميل المحادثة…</div>';
+  document.getElementById('chat-body').innerHTML = skeleton(5);
   document.getElementById('chat-screen').classList.add('open');
 
   try {
@@ -563,8 +586,8 @@ function reportUser(userId, messageId){
   const reason = prompt('سبب الإبلاغ:');
   if (reason === null || reason.trim() === '') return;
   api('report.php', { method:'POST', body: JSON.stringify({ reported_id: userId, message_id: messageId, reason }) })
-    .then(() => alert('تم الإبلاغ بنجاح'))
-    .catch(e => alert(e.message));
+    .then(() => showToast('تم الإبلاغ بنجاح', 'success'))
+    .catch(e => showToast(e.message, 'error'));
 }
 
 function startPolling(){
@@ -660,13 +683,13 @@ async function sendGift(gift){
         receiver_id: receiverId,
       })
     });
-    // Update balance
     const me = await api('me.php');
     document.getElementById('my-coins').textContent = `${me.coins} 🪙`;
     document.getElementById('gift-balance').textContent = `رصيدك: ${me.coins} 🪙`;
     closeGiftPanel();
+    showToast(`تم إرسال ${gift.icon} ${gift.name}`, 'success');
   } catch(e){
-    alert(e.message);
+    showToast(e.message, 'error');
   }
 }
 
@@ -771,7 +794,7 @@ document.querySelectorAll('.store-tab').forEach(tab => {
 
 async function openStore(){
   document.getElementById('store-screen').classList.add('open');
-  document.getElementById('store-grid').innerHTML = '<div class="loading-hint">جاري التحميل…</div>';
+  document.getElementById('store-grid').innerHTML = skeleton(4);
   try {
     storeData = await api('store.php');
     document.getElementById('store-coins').textContent = `${storeData.coins} كوين`;
@@ -880,7 +903,7 @@ document.getElementById('profile-back').addEventListener('click', () => document
 
 async function openProfile(userId){
   document.getElementById('profile-screen').classList.add('open');
-  document.getElementById('profile-content').innerHTML = '<div class="loading-hint">جاري التحميل…</div>';
+  document.getElementById('profile-content').innerHTML = skeleton(6);
 
   try {
     const data = await api(`profile.php?user_id=${userId}`);
@@ -999,13 +1022,15 @@ function renderProfile(data){
           followBtn.dataset.following = '0';
           followBtn.textContent = 'متابعة';
           followBtn.classList.remove('following');
+          showToast('تم إلغاء المتابعة', 'info');
         } else {
           const res = await api('follow.php', { method:'POST', body: JSON.stringify({ user_id: user.id }) });
           followBtn.dataset.following = '1';
           followBtn.textContent = 'متابَع ✓';
           followBtn.classList.add('following');
+          showToast(res.mutual ? 'متابعة متبادلة!' : 'تمت المتابعة', 'success');
         }
-      } catch(e){}
+      } catch(e){ showToast(e.message, 'error'); }
     });
   }
 }
