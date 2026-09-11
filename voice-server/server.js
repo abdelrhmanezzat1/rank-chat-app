@@ -1,4 +1,5 @@
 require('dotenv').config();
+const http = require('http');
 const { WebSocketServer } = require('ws');
 const crypto = require('crypto');
 const mysql = require('mysql2/promise');
@@ -123,9 +124,22 @@ async function cleanupMicSession(userId, room) {
   }
 }
 
-// ── WebSocket server ────────────────────────────────────────────────────
-const wss = new WebSocketServer({ port: PORT, maxPayload: MAX_PAYLOAD });
-console.log(`[Voice] Signaling server running on ws://0.0.0.0:${PORT}`);
+// ── HTTP server + health check + WebSocket server ─────────────────────────
+const httpServer = http.createServer((req, res) => {
+  if (req.url === '/health' || req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', service: 'rank-chat-voice' }));
+    return;
+  }
+  res.writeHead(404);
+  res.end();
+});
+
+const wss = new WebSocketServer({ server: httpServer, maxPayload: MAX_PAYLOAD });
+
+httpServer.listen(PORT, () => {
+  console.log(`[Voice] Signaling server running on ws://0.0.0.0:${PORT}`);
+});
 
 wss.on('connection', (ws, req) => {
   // ── Auth: token in first message (not URL query) ──────────────────
