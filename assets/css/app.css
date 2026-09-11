@@ -233,20 +233,101 @@ body{
 .frame-btn.equipped{ background:#3CCB6F; color:#0D1220; }
 .store-error{ display:none; padding:10px 16px; margin:8px 16px; background:rgba(255,92,122,.15); border:1px solid var(--owner); border-radius:10px; color:var(--owner); font-size:12.5px; text-align:center; }
 
-/* ===== Mic room ===== */
-.mic-grid{ flex:1; padding:20px; display:grid; grid-template-columns:repeat(3,1fr); gap:18px; align-content:start; overflow-y:auto; }
-.mic-slot{ text-align:center; position:relative; }
-.mic-slot .avatar{ width:56px; height:56px; font-size:17px; margin:0 auto 6px; border-color: var(--admin); transition: box-shadow .2s ease; }
-.mic-slot.speaking .avatar{ box-shadow:0 0 0 4px rgba(60,203,111,.4); animation: speakPulse 1.2s ease-in-out infinite; }
-.mic-slot.muted .avatar{ opacity:.5; border-style:dashed; }
-.mic-slot .name{ font-size:11.5px; color:var(--muted); }
-.mic-slot .muted-icon{ position:absolute; top:2px; right:calc(50% - 32px); width:20px; height:20px; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center; }
+/* ===== Mic room - Large circular seats ===== */
+.mic-room-body{ flex:1; overflow-y:auto; padding:20px 16px; }
+.mic-room-header{ text-align:center; padding:8px 0 16px; }
+.mic-room-count{ font-size:13px; color:var(--muted); }
+.mic-room-count span{ color:var(--gold); font-weight:700; }
 
-@keyframes speakPulse{
-  0%, 100%{ box-shadow:0 0 0 4px rgba(60,203,111,.4); }
-  50%{ box-shadow:0 0 0 8px rgba(60,203,111,.15); }
+.mic-seats-grid{
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;
+  justify-items:center; padding:0 8px;
 }
 
+.mic-seat{
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  cursor:pointer; transition:transform .15s;
+}
+.mic-seat:hover{ transform:scale(1.05); }
+
+/* Large circular seat */
+.mic-seat-circle{
+  width:80px; height:80px; border-radius:50%; position:relative;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--panel-2);
+  border:3px solid var(--seat-ring, var(--line));
+  transition:all .3s ease;
+}
+
+/* Empty seat */
+.mic-seat.empty .mic-seat-circle{
+  background:var(--panel-2);
+}
+.mic-seat.empty .mic-seat-circle .mic-icon{
+  color:var(--muted-2); opacity:.6;
+}
+
+/* Occupied seat */
+.mic-seat.occupied .mic-seat-circle{
+  border-color:var(--seat-ring, var(--admin));
+  box-shadow:0 0 12px -3px var(--seat-ring, var(--admin));
+}
+
+/* Speaking animation */
+.mic-seat.speaking .mic-seat-circle{
+  border-color:#3CCB6F;
+  box-shadow:0 0 0 4px rgba(60,203,111,.3);
+  animation:speakPulseLarge 1.2s ease-in-out infinite;
+}
+@keyframes speakPulseLarge{
+  0%, 100%{ box-shadow:0 0 0 4px rgba(60,203,111,.3); }
+  50%{ box-shadow:0 0 0 10px rgba(60,203,111,.08); }
+}
+
+/* Muted overlay */
+.mic-seat.muted .mic-seat-circle::after{
+  content:''; position:absolute; inset:0; border-radius:50%;
+  background:rgba(13,18,32,.5);
+}
+.mic-seat.muted .mic-seat-circle .mic-mute-badge{
+  position:absolute; bottom:2px; right:2px; width:22px; height:22px;
+  border-radius:50%; background:var(--owner); display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--panel); z-index:2;
+}
+.mic-seat.muted .mic-seat-circle .mic-mute-badge svg{ width:12px; height:12px; }
+
+/* Seat number label */
+.mic-seat-number{
+  font-size:10px; color:var(--muted-2); font-weight:600;
+}
+.mic-seat.occupied .mic-seat-number{ color:var(--text); }
+
+/* Seat username */
+.mic-seat-username{
+  font-size:11px; color:var(--muted); max-width:80px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-align:center;
+}
+.mic-seat.occupied .mic-seat-username{ color:var(--text); font-weight:500; }
+
+/* Seat tier rings */
+.mic-seat.tier-normal .mic-seat-circle{ border-color:var(--member); }
+.mic-seat.tier-vip .mic-seat-circle{ border-color:var(--admin); box-shadow:0 0 10px -3px var(--admin); }
+.mic-seat.tier-premium .mic-seat-circle{ border-color:var(--gold); box-shadow:0 0 10px -3px var(--gold); }
+
+/* Seat avatar inside circle */
+.mic-seat-avatar{
+  width:68px; height:68px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:20px; color:#0D1220;
+  background:linear-gradient(135deg, var(--f-from, var(--panel-2)), var(--f-to, var(--panel-2)));
+  border:2px solid var(--frame-color, var(--rank-color, var(--admin)));
+}
+
+/* Mic icon in empty seat */
+.mic-icon{ display:flex; align-items:center; justify-content:center; }
+.mic-icon svg{ width:28px; height:28px; }
+
+/* Mic actions bar */
 .mic-actions{ padding:16px; border-top:1px solid var(--line); display:flex; gap:10px; }
 .mic-join-btn, .mic-leave-btn{ flex:1; padding:13px; border-radius:12px; border:none; font-family:inherit; font-weight:700; font-size:14px; cursor:pointer; }
 .mic-join-btn{ background:#3CCB6F; color:#0D1220; }

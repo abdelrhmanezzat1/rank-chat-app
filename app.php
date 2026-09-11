@@ -111,10 +111,12 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
       </div>
       <div class="chat-title">
         <div class="name">غرفة المايك العامة</div>
-        <div class="status">اضغط انضمام عشان تدخل المايك</div>
+        <div class="status" id="mic-count">0 على المايك</div>
       </div>
     </div>
-    <div class="mic-grid" id="mic-grid"></div>
+    <div class="mic-room-body" id="mic-room-body">
+      <div class="mic-seats-grid" id="mic-seats-grid"></div>
+    </div>
     <div id="voice-audio-container"></div>
     <div class="mic-actions">
       <button id="mic-mute-btn" title="كتم / فتح المايك" style="display:none;">

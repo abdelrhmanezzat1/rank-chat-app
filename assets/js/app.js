@@ -326,7 +326,7 @@ function showStoreError(msg) {
   if (err) { err.textContent = msg; err.style.display = 'block'; setTimeout(() => err.style.display = 'none', 3000); }
 }
 
-/* ===== Mic room (presence polling) ===== */
+/* ===== Mic room (large circular seats) ===== */
 let inMic = false;
 let micPollTimer = null;
 
@@ -343,31 +343,56 @@ document.getElementById('mic-back').addEventListener('click', () => {
 
 async function refreshMic(){
   try {
-    const users = await api('mic_status.php?room=main');
-    document.getElementById('mic-count').textContent = `${users.length} على المايك`;
-    const grid = document.getElementById('mic-grid');
+    const data = await api('mic_status.php?room=main');
+    const seats = data.seats || [];
+    document.getElementById('mic-count').textContent = `${data.count || 0} على المايك`;
+    const grid = document.getElementById('mic-seats-grid');
 
-    if (users.length === 0) {
-      grid.innerHTML = '<div class="loading-hint">مفيش حد على المايك دلوقتي</div>';
-    } else {
-      grid.innerHTML = users.map(u => {
-        const isLocal = u.id === ME_ID;
-        const isMuted = voiceState.mutedPeers.get(u.id) || false;
-        const isSpeaking = voiceState.speakingPeers.get(u.id) || false;
-        const slotClass = ['mic-slot'];
-        if (isSpeaking) slotClass.push('speaking');
-        if (isMuted) slotClass.push('muted');
-        if (isLocal) slotClass.push('local');
+    grid.innerHTML = seats.map(seat => {
+      const u = seat.user;
+      if (!u) {
+        // Empty seat
+        const tierRing = seat.tier === 'vip' ? 'var(--admin)' : seat.tier === 'premium' ? 'var(--gold)' : 'var(--member)';
         return `
-          <div class="${slotClass.join(' ')}" data-user-id="${u.id}">
-            <div class="avatar" style="margin:0 auto 6px;">${initials(u.username)}</div>
-            <div class="name">${esc(u.username)}</div>
-            ${isMuted ? '<div class="muted-icon">' + mutedSvg() + '</div>' : ''}
+          <div class="mic-seat empty tier-${seat.tier}" style="--seat-ring:${tierRing}">
+            <div class="mic-seat-circle">
+              <div class="mic-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="9" y="2" width="6" height="12" rx="3"/>
+                  <path d="M5 10a7 7 0 0 0 14 0"/>
+                  <path d="M12 19v3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="mic-seat-number">${seat.position}</div>
           </div>`;
-      }).join('');
-    }
+      }
 
-    inMic = users.some(u => u.id === ME_ID);
+      // Occupied seat
+      const isLocal = u.id === ME_ID;
+      const isMuted = voiceState.mutedPeers.get(u.id) || false;
+      const isSpeaking = voiceState.speakingPeers.get(u.id) || false;
+      const seatClass = ['mic-seat', 'occupied', `tier-${seat.tier}`];
+      if (isSpeaking) seatClass.push('speaking');
+      if (isMuted) seatClass.push('muted');
+      if (isLocal) seatClass.push('local');
+
+      const ringColor = u.frame_from || u.rank_color || 'var(--admin)';
+      const bgGrad = `linear-gradient(135deg, ${esc(u.frame_from || '#1A2338')}, ${esc(u.frame_to || '#1A2338')})`;
+
+      return `
+        <div class="${seatClass.join(' ')}" data-user-id="${u.id}" style="--seat-ring:${esc(ringColor)}">
+          <div class="mic-seat-circle">
+            <div class="mic-seat-avatar" style="--f-from:${esc(u.frame_from || '#1A2338')};--f-to:${esc(u.frame_to || '#1A2338')};--frame-color:${esc(ringColor)};--rank-color:${esc(u.rank_color)}">
+              ${initials(u.username)}
+            </div>
+            ${isMuted ? `<div class="mic-mute-badge">${mutedSvg()}</div>` : ''}
+          </div>
+          <div class="mic-seat-number">${u.rank_icon === 'crown' ? '👑' : u.rank_icon === 'shield' ? '🛡' : u.rank_icon === 'gem' ? '💎' : ''} ${esc(u.username)}</div>
+        </div>`;
+    }).join('');
+
+    inMic = seats.some(s => s.user && s.user.id === ME_ID);
     document.getElementById('mic-join-btn').style.display = inMic ? 'none' : 'block';
     document.getElementById('mic-leave-btn').style.display = inMic ? 'block' : 'none';
     document.getElementById('mic-mute-btn').style.display = inMic ? 'flex' : 'none';
@@ -377,11 +402,11 @@ async function refreshMic(){
 }
 
 function mutedSvg(){
-  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF5C7A" stroke-width="2.5"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
+  return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
 }
 
 function voiceShowError(msg) {
-  const grid = document.getElementById('mic-grid');
+  const grid = document.getElementById('mic-seats-grid');
   if (!grid) return;
   const existing = grid.querySelector('.voice-error');
   if (existing) existing.remove();
@@ -600,17 +625,21 @@ function stopSpeakingDetection(userId) {
 }
 
 function updateMicSlotSpeaking(userId, speaking) {
-  const slot = document.querySelector(`.mic-slot[data-user-id="${userId}"]`);
-  if (slot) slot.classList.toggle('speaking', speaking);
+  const seat = document.querySelector(`.mic-seat[data-user-id="${userId}"]`);
+  if (seat) seat.classList.toggle('speaking', speaking);
 }
 
 function updateMicSlotMuted(userId, muted) {
-  const slot = document.querySelector(`.mic-slot[data-user-id="${userId}"]`);
-  if (!slot) return;
-  slot.classList.toggle('muted', muted);
-  const existingIcon = slot.querySelector('.muted-icon');
-  if (muted && !existingIcon) { const icon = document.createElement('div'); icon.className = 'muted-icon'; icon.innerHTML = mutedSvg(); slot.appendChild(icon); }
-  else if (!muted && existingIcon) existingIcon.remove();
+  const seat = document.querySelector(`.mic-seat[data-user-id="${userId}"]`);
+  if (!seat) return;
+  seat.classList.toggle('muted', muted);
+  const existingBadge = seat.querySelector('.mic-mute-badge');
+  if (muted && !existingBadge) {
+    const badge = document.createElement('div');
+    badge.className = 'mic-mute-badge';
+    badge.innerHTML = mutedSvg();
+    seat.querySelector('.mic-seat-circle').appendChild(badge);
+  } else if (!muted && existingBadge) existingBadge.remove();
 }
 
 function voiceToggleMute() {
@@ -619,18 +648,22 @@ function voiceToggleMute() {
   if (voiceState.ws?.readyState === 1) safeWsSend(voiceState.ws, JSON.stringify({ type: 'mute-state', muted: voiceState.isMuted }));
   updateMuteBtnIcon();
 
-  const localSlot = document.querySelector(`.mic-slot[data-user-id="${ME_ID}"]`);
-  if (localSlot) {
-    localSlot.classList.toggle('muted', voiceState.isMuted);
-    const existingIcon = localSlot.querySelector('.muted-icon');
-    if (voiceState.isMuted && !existingIcon) { const icon = document.createElement('div'); icon.className = 'muted-icon'; icon.innerHTML = mutedSvg(); localSlot.appendChild(icon); }
-    else if (!voiceState.isMuted && existingIcon) existingIcon.remove();
+  const localSeat = document.querySelector(`.mic-seat[data-user-id="${ME_ID}"]`);
+  if (localSeat) {
+    localSeat.classList.toggle('muted', voiceState.isMuted);
+    const existingBadge = localSeat.querySelector('.mic-mute-badge');
+    if (voiceState.isMuted && !existingBadge) {
+      const badge = document.createElement('div');
+      badge.className = 'mic-mute-badge';
+      badge.innerHTML = mutedSvg();
+      localSeat.querySelector('.mic-seat-circle').appendChild(badge);
+    } else if (!voiceState.isMuted && existingBadge) existingBadge.remove();
   }
 
   if (!voiceState.isMuted) { setupLocalSpeakingDetection(); }
   else {
     stopSpeakingDetection('local');
-    const ls = document.querySelector(`.mic-slot[data-user-id="${ME_ID}"]`);
+    const ls = document.querySelector(`.mic-seat[data-user-id="${ME_ID}"]`);
     if (ls) ls.classList.remove('speaking');
   }
 }
@@ -651,8 +684,8 @@ function removePeer(userId) {
   const pc = voiceState.peers.get(userId);
   if (pc) { pc.close(); voiceState.peers.delete(userId); }
   detachRemoteAudio(userId);
-  const slot = document.querySelector(`.mic-slot[data-user-id="${userId}"]`);
-  if (slot) slot.remove();
+  // Don't remove the seat from DOM — it stays as an occupied seat
+  // The seat will be refreshed on next mic_status poll
 }
 
 function voiceLeave() {
