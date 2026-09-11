@@ -81,10 +81,25 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
     </div>
     <div class="chat-body" id="chat-body"></div>
     <div class="chat-input-bar">
+      <div class="gift-btn" id="chat-gift-btn" title="إرسال هدية">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8v12"/><path d="M5 8c0-2.2 1.8-4 4-4h6c2.2 0 4 1.8 4 4"/><path d="M5 8h14"/></svg>
+      </div>
       <input type="text" id="chat-input" placeholder="اكتب رسالة…" maxlength="2000">
       <div class="send-btn" id="chat-send">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D1220" stroke-width="2.2"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
       </div>
+    </div>
+
+    <!-- Gift panel -->
+    <div class="gift-panel" id="gift-panel">
+      <div class="gift-panel-header">
+        <span>إرسال هدية</span>
+        <div class="gift-panel-close" id="gift-panel-close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </div>
+      </div>
+      <div class="gift-list" id="gift-list"></div>
+      <div class="gift-balance" id="gift-balance">رصيدك: 0 🪙</div>
     </div>
   </div>
 

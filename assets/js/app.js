@@ -259,7 +259,87 @@ document.getElementById('chat-back').addEventListener('click', () => {
   document.getElementById('chat-screen').classList.remove('open');
   activeConversation = null;
   stopPolling();
+  closeGiftPanel();
 });
+
+/* ===== Gift Panel ===== */
+let giftsData = [];
+
+document.getElementById('chat-gift-btn').addEventListener('click', toggleGiftPanel);
+document.getElementById('gift-panel-close').addEventListener('click', closeGiftPanel);
+
+function toggleGiftPanel(){
+  const panel = document.getElementById('gift-panel');
+  if (panel.classList.contains('open')) {
+    closeGiftPanel();
+  } else {
+    openGiftPanel();
+  }
+}
+
+function closeGiftPanel(){
+  document.getElementById('gift-panel').classList.remove('open');
+}
+
+async function openGiftPanel(){
+  const panel = document.getElementById('gift-panel');
+  panel.classList.add('open');
+
+  // Load gifts
+  try {
+    const res = await fetch('api/gifts.php');
+    giftsData = await res.json();
+  } catch(e){
+    giftsData = [];
+  }
+
+  // Load user balance
+  try {
+    const me = await api('me.php');
+    document.getElementById('gift-balance').textContent = `رصيدك: ${me.coins} 🪙`;
+  } catch(e){}
+
+  renderGifts();
+}
+
+function renderGifts(){
+  const list = document.getElementById('gift-list');
+  list.innerHTML = '';
+
+  giftsData.forEach(g => {
+    const div = document.createElement('div');
+    div.className = `gift-item ${g.rarity}`;
+    div.innerHTML = `
+      <div class="gift-icon">${g.icon}</div>
+      <div class="gift-name">${esc(g.name)}</div>
+      <div class="gift-price">${g.price} 🪙</div>
+    `;
+    div.addEventListener('click', () => sendGift(g));
+    list.appendChild(div);
+  });
+}
+
+async function sendGift(gift){
+  if (!activeConversation) return;
+  const receiverId = activeConversation.user_id;
+
+  try {
+    await api('send_gift.php', {
+      method: 'POST',
+      body: JSON.stringify({
+        gift_id: gift.id,
+        receiver_id: receiverId,
+      })
+    });
+    // Update balance
+    const me = await api('me.php');
+    document.getElementById('my-coins').textContent = `${me.coins} 🪙`;
+    document.getElementById('gift-balance').textContent = `رصيدك: ${me.coins} 🪙`;
+    closeGiftPanel();
+  } catch(e){
+    alert(e.message);
+  }
+}
 
 document.getElementById('chat-send').addEventListener('click', sendMessage);
 document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
