@@ -2,7 +2,20 @@
 require_once __DIR__ . '/../config/auth.php';
 header('Content-Type: application/json; charset=utf-8');
 $u = require_login();
+
+// Check if banned
+$stmt = db()->prepare("SELECT 1 FROM banned_users WHERE user_id = ?");
+$stmt->execute([$u['id']]);
+if ($stmt->fetch()) {
+    http_response_code(403);
+    die(json_encode(['error' => 'انت محظور']));
+}
+
 db()->prepare("UPDATE users SET is_online = 1, last_seen = NOW() WHERE id = ?")->execute([$u['id']]);
+
+// Cleanup expired mutes
+db()->exec("DELETE FROM muted_users WHERE expires_at < NOW()");
+db()->exec("UPDATE users SET is_muted = 0 WHERE is_muted = 1 AND id NOT IN (SELECT user_id FROM muted_users WHERE expires_at > NOW())");
 
 // Award coins for mic time (every ~60 seconds via heartbeat)
 $stmt = db()->prepare("

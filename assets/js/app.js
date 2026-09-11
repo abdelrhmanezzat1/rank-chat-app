@@ -141,6 +141,68 @@ function timeSince(date) {
   return `${days} يوم`;
 }
 
+/* ===== Mod Menu ===== */
+const ME_RANK = document.body.dataset.meRank || 'normal';
+
+document.getElementById('mod-menu-close').addEventListener('click', closeModMenu);
+document.getElementById('mod-overlay').addEventListener('click', closeModMenu);
+
+function closeModMenu(){
+  document.getElementById('mod-menu').classList.remove('open');
+  document.getElementById('mod-overlay').classList.remove('open');
+}
+
+function openModMenu(userId, username, rankKey){
+  document.getElementById('mod-menu-title').textContent = 'إدارة: ' + username;
+  const items = document.getElementById('mod-menu-items');
+  items.innerHTML = '';
+
+  const canMute = ['owner','admin','manager'].includes(ME_RANK);
+  const canBan = ['owner','admin'].includes(ME_RANK);
+  const isTarget = rankKey === 'owner' || rankKey === 'admin';
+
+  if (canMute && !isTarget) {
+    items.innerHTML += `
+      <div class="mod-menu-item" onclick="modAction('mute', ${userId}, '${esc(username)}', 30)">
+        <span class="mod-icon">🔇</span> كتم 30 دقيقة
+      </div>
+      <div class="mod-menu-item" onclick="modAction('mute', ${userId}, '${esc(username)}', 60)">
+        <span class="mod-icon">🔇</span> كتم ساعة
+      </div>
+      <div class="mod-menu-item" onclick="modAction('kick', ${userId}, '${esc(username)}')">
+        <span class="mod-icon">👋</span> طرد
+      </div>
+    `;
+  }
+  if (canBan && !isTarget) {
+    items.innerHTML += `
+      <div class="mod-menu-item danger" onclick="modAction('ban', ${userId}, '${esc(username)}')">
+        <span class="mod-icon">🚫</span> حظر
+      </div>
+    `;
+  }
+
+  if (items.innerHTML === '') {
+    items.innerHTML = '<div class="mod-menu-item" style="color:var(--muted)">مفيش إجراءات متاحة</div>';
+  }
+
+  document.getElementById('mod-menu').classList.add('open');
+  document.getElementById('mod-overlay').classList.add('open');
+}
+
+async function modAction(action, userId, username, duration){
+  const reason = prompt(`سبب ${action === 'mute' ? 'الكتم' : action === 'kick' ? 'الطرد' : 'الحظر'} ${username}:`);
+  if (reason === null) return;
+
+  try {
+    const body = { user_id: userId, reason: reason || 'بدون سبب' };
+    if (action === 'mute') body.duration_minutes = duration || 30;
+    await api(`${action}.php`, { method:'POST', body: JSON.stringify(body) });
+    closeModMenu();
+    loadUsers();
+  } catch(e){ alert(e.message); }
+}
+
 /* ===== Users list ===== */
 async function loadUsers(){
   try {
@@ -255,6 +317,10 @@ function renderList(){
         <button class="user-profile-btn" onclick="event.stopPropagation(); openProfile(${u.id})" title="عرض البروفايل">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7"/></svg>
         </button>
+        ${ME_RANK === 'owner' || ME_RANK === 'admin' || ME_RANK === 'manager' ? `
+        <button class="user-mod-btn" onclick="event.stopPropagation(); openModMenu(${u.id}, '${esc(u.username)}', '${u.rank_key}')" title="إدارة">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>` : ''}
       `;
       row.addEventListener('click', () => openChat(u, rankColor));
       body.appendChild(row);
@@ -341,9 +407,22 @@ function appendBubble(m){
   let classes = 'bubble ' + (m.sender_id == ME_ID ? 'out' : 'in');
   if (m.effect_css) classes += ' ' + m.effect_css;
   bubble.className = classes;
-  bubble.textContent = m.content;
+
+  let html = m.content;
+  if (m.sender_id != ME_ID) {
+    html += `<button class="bubble-report-btn" onclick="event.stopPropagation(); reportUser(${m.sender_id}, ${m.id || 0})" title="الإبلاغ">⚠️</button>`;
+  }
+  bubble.innerHTML = html;
   body.appendChild(bubble);
   body.scrollTop = body.scrollHeight;
+}
+
+function reportUser(userId, messageId){
+  const reason = prompt('سبب الإبلاغ:');
+  if (reason === null || reason.trim() === '') return;
+  api('report.php', { method:'POST', body: JSON.stringify({ reported_id: userId, message_id: messageId, reason }) })
+    .then(() => alert('تم الإبلاغ بنجاح'))
+    .catch(e => alert(e.message));
 }
 
 function startPolling(){

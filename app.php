@@ -19,7 +19,7 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
-<body data-me-id="<?= (int)$me['id'] ?>" data-me-name="<?= htmlspecialchars($me['username']) ?>">
+<body data-me-id="<?= (int)$me['id'] ?>" data-me-name="<?= htmlspecialchars($me['username']) ?>" data-me-rank="<?= htmlspecialchars($me['rank_key']) ?>">
 
 <div class="app">
 
@@ -182,6 +182,18 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
     <div class="notif-list" id="notif-list">
       <div class="loading-hint">جاري التحميل…</div>
     </div>
+  </div>
+
+  <!-- Mod Menu -->
+  <div class="mod-overlay" id="mod-overlay"></div>
+  <div class="mod-menu" id="mod-menu">
+    <div class="mod-menu-header">
+      <span id="mod-menu-title">إدارة</span>
+      <div class="mod-menu-close" id="mod-menu-close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </div>
+    </div>
+    <div id="mod-menu-items"></div>
   </div>
 
 </div>

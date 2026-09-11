@@ -17,6 +17,22 @@ if (mb_strlen($content) > 2000) {
     die(json_encode(['error' => 'الرسالة طويلة جدًا']));
 }
 
+// Check if user is muted
+$stmt = db()->prepare("SELECT 1 FROM muted_users WHERE user_id = ? AND expires_at > NOW()");
+$stmt->execute([$me['id']]);
+if ($stmt->fetch()) {
+    http_response_code(403);
+    die(json_encode(['error' => 'انت مكتوم، مش تقدر تبعت رسائل']));
+}
+
+// Check if banned
+$stmt = db()->prepare("SELECT 1 FROM banned_users WHERE user_id = ?");
+$stmt->execute([$me['id']]);
+if ($stmt->fetch()) {
+    http_response_code(403);
+    die(json_encode(['error' => 'انت محظور']));
+}
+
 // تأكد إن اليوزر ده فعلًا طرف في المحادثة دي
 $stmt = db()->prepare("SELECT * FROM conversations WHERE id = ? AND (user_a = ? OR user_b = ?)");
 $stmt->execute([$convId, $me['id'], $me['id']]);

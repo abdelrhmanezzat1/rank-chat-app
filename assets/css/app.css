@@ -197,6 +197,42 @@ body{
   flex-shrink:0; transition:all .15s;
 }
 .user-profile-btn:hover{ color:var(--admin); border-color:var(--admin); }
+.user-mod-btn{
+  width:28px; height:28px; border-radius:8px;
+  background:var(--panel-2); border:1px solid var(--line); display:flex;
+  align-items:center; justify-content:center; cursor:pointer; color:var(--muted);
+  flex-shrink:0; transition:all .15s;
+}
+.user-mod-btn:hover{ color:var(--owner); border-color:var(--owner); }
+
+/* Mod Menu */
+.mod-menu{
+  display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:280px; background:var(--panel); border:1px solid var(--line);
+  border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.5); z-index:300;
+  overflow:hidden;
+}
+.mod-menu.open{ display:block; }
+.mod-menu-header{
+  padding:14px 16px; border-bottom:1px solid var(--line);
+  font-weight:700; font-size:14px; color:var(--text);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.mod-menu-close{ cursor:pointer; color:var(--muted); padding:4px; }
+.mod-menu-close:hover{ color:var(--owner); }
+.mod-menu-item{
+  display:flex; align-items:center; gap:10px; padding:12px 16px;
+  cursor:pointer; transition:background .15s; border-bottom:1px solid var(--line);
+  font-size:13px; color:var(--text);
+}
+.mod-menu-item:last-child{ border-bottom:none; }
+.mod-menu-item:hover{ background:var(--panel-2); }
+.mod-menu-item.danger{ color:var(--owner); }
+.mod-menu-item .mod-icon{ font-size:16px; width:24px; text-align:center; }
+.mod-overlay{
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:299;
+}
+.mod-overlay.open{ display:block; }
 .user-meta{ text-align:left; flex-shrink:0; font-size:11px; color:var(--muted-2); }
 
 .store-chip{
@@ -476,6 +512,13 @@ body{
   content:'💎'; position:absolute; top:-4px; right:-4px;
   font-size:12px; animation:diamondPulse 2s ease-in-out infinite;
 }
+.bubble-report-btn{
+  position:absolute; top:4px; left:4px; background:none; border:none;
+  cursor:pointer; font-size:10px; opacity:0; transition:opacity .2s;
+  padding:2px;
+}
+.bubble:hover .bubble-report-btn{ opacity:.5; }
+.bubble-report-btn:hover{ opacity:1 !important; }
 @keyframes diamondPulse{
   0%,100%{ transform:scale(1); }
   50%{ transform:scale(1.2); }
