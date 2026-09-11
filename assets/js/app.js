@@ -860,8 +860,7 @@ document.getElementById('mic-join-btn').addEventListener('click', async () => {
     await refreshMic();
     loadUsers();
     voiceJoin(); // Start WebRTC voice (mic session is now committed)
-  } catch(e){}
-  } catch(e){}
+  } catch(e) { console.error('[Mic] join failed:', e); }
 });
 
 document.getElementById('mic-leave-btn').addEventListener('click', () => {
