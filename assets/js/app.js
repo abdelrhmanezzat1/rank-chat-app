@@ -276,49 +276,122 @@ async function sendMessage(){
   } catch(e){}
 }
 
-/* ===== Store ===== */
+/* ===== Store (tabbed) ===== */
+let storeData = null;
+let storeTab = 'frame';
+
 document.getElementById('open-store').addEventListener('click', openStore);
 document.getElementById('store-back').addEventListener('click', () => document.getElementById('store-screen').classList.remove('open'));
+
+// Store tab switching
+document.querySelectorAll('.store-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.store-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    storeTab = tab.dataset.type;
+    if (storeData) renderStoreItems();
+  });
+});
 
 async function openStore(){
   document.getElementById('store-screen').classList.add('open');
   document.getElementById('store-grid').innerHTML = '<div class="loading-hint">جاري التحميل…</div>';
   try {
-    const data = await api('store.php');
-    document.getElementById('store-coins').textContent = `${data.coins} كوين`;
-    document.getElementById('my-coins').textContent = `${data.coins} 🪙`;
-    renderStore(data.frames);
+    storeData = await api('store.php');
+    document.getElementById('store-coins').textContent = `${storeData.coins} كوين`;
+    document.getElementById('my-coins').textContent = `${storeData.coins} 🪙`;
+    renderStoreItems();
   } catch(e){}
 }
 
-function renderStore(frames){
+function renderStoreItems(){
   const grid = document.getElementById('store-grid');
   grid.innerHTML = '';
-  frames.forEach(f => {
+
+  if (!storeData) return;
+
+  let items = [];
+  if (storeTab === 'frame') {
+    items = (storeData.frames || []).map(f => ({
+      id: f.id, name: f.name, type: 'frame',
+      from: f.gradient_from, to: f.gradient_to,
+      price: f.price, rarity: f.rarity,
+      owned: f.owned, equipped: f.equipped,
+    }));
+  } else {
+    items = (storeData.items[storeTab] || []).map(i => ({
+      id: i.id, name: i.name, type: i.item_type,
+      from: i.gradient_from, to: i.gradient_to,
+      price: i.price, rarity: i.rarity,
+      owned: i.owned, equipped: i.equipped,
+      preview_bg: i.preview_bg || null,
+    }));
+  }
+
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="loading-hint">مفيش منتجات لسه</div>';
+    return;
+  }
+
+  items.forEach(item => {
     const card = document.createElement('div');
     card.className = 'frame-card';
+
     let btnHtml;
-    if (f.equipped == 1) btnHtml = `<button class="frame-btn equipped" disabled>مفعّل حاليًا</button>`;
-    else if (f.owned == 1) btnHtml = `<button class="frame-btn equip" data-id="${f.id}">تفعيل</button>`;
-    else btnHtml = `<button class="frame-btn buy" data-id="${f.id}">شراء (${f.price} 🪙)</button>`;
+    if (item.equipped == 1) btnHtml = `<button class="frame-btn equipped" disabled>مفعّل حاليًا</button>`;
+    else if (item.owned == 1) btnHtml = `<button class="frame-btn equip" data-id="${item.id}" data-type="${item.type}">تفعيل</button>`;
+    else btnHtml = `<button class="frame-btn buy" data-id="${item.id}" data-type="${item.type}">شراء (${item.price} 🪙)</button>`;
+
+    // Different preview based on type
+    let previewHtml;
+    if (item.type === 'bg_skin' && item.preview_bg) {
+      previewHtml = `<div class="frame-preview" style="border-color:${esc(item.from)}; background:${item.preview_bg}"></div>`;
+    } else if (item.type === 'row_theme') {
+      previewHtml = `<div class="frame-preview" style="border-color:${esc(item.from)}; background:linear-gradient(135deg, ${esc(item.from)}, ${esc(item.to)}); border-radius:8px;"></div>`;
+    } else if (item.type === 'name_theme') {
+      previewHtml = `<div class="frame-preview" style="border-color:${esc(item.from)}; background:linear-gradient(135deg, ${esc(item.from)}, ${esc(item.to)})"><span style="color:#0D1220;font-weight:900;font-size:20px">Aa</span></div>`;
+    } else {
+      previewHtml = `<div class="frame-preview" style="border-color:${esc(item.from)}; background:linear-gradient(135deg, ${esc(item.from)}, ${esc(item.to)})"></div>`;
+    }
+
+    const typeLabels = { frame: 'إطار', row_theme: 'لون الصف', name_theme: 'لون الاسم', bg_skin: 'خلفية' };
 
     card.innerHTML = `
-      <div class="frame-preview" style="border-color:${esc(f.gradient_from)}; background:linear-gradient(135deg, ${esc(f.gradient_from)}, ${esc(f.gradient_to)})"></div>
-      <div class="frame-name">${esc(f.name)}</div>
-      <div class="frame-rarity">${esc(f.rarity)}</div>
+      ${previewHtml}
+      <div class="frame-name">${esc(item.name)}</div>
+      <div class="frame-rarity">${typeLabels[item.type] || item.type} — ${esc(item.rarity)}</div>
       ${btnHtml}
     `;
     grid.appendChild(card);
   });
 
-  grid.querySelectorAll('.frame-btn.buy').forEach(btn => btn.addEventListener('click', async () => {
-    try { await api('buy_frame.php', { method:'POST', body: JSON.stringify({ frame_id: btn.dataset.id }) }); openStore(); loadUsers(); }
-    catch(e){ showStoreError(e.message); }
-  }));
-  grid.querySelectorAll('.frame-btn.equip').forEach(btn => btn.addEventListener('click', async () => {
-    try { await api('equip_frame.php', { method:'POST', body: JSON.stringify({ frame_id: btn.dataset.id }) }); openStore(); loadUsers(); }
-    catch(e){ showStoreError(e.message); }
-  }));
+  // Buy handlers
+  grid.querySelectorAll('.frame-btn.buy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        if (btn.dataset.type === 'frame') {
+          await api('buy_frame.php', { method:'POST', body: JSON.stringify({ frame_id: btn.dataset.id }) });
+        } else {
+          await api('buy_item.php', { method:'POST', body: JSON.stringify({ item_id: btn.dataset.id }) });
+        }
+        openStore(); loadUsers();
+      } catch(e){ showStoreError(e.message); }
+    });
+  });
+
+  // Equip handlers
+  grid.querySelectorAll('.frame-btn.equip').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        if (btn.dataset.type === 'frame') {
+          await api('equip_frame.php', { method:'POST', body: JSON.stringify({ frame_id: btn.dataset.id }) });
+        } else {
+          await api('equip_item.php', { method:'POST', body: JSON.stringify({ item_id: btn.dataset.id, equip: 1 }) });
+        }
+        openStore(); loadUsers();
+      } catch(e){ showStoreError(e.message); }
+    });
+  });
 }
 
 function showStoreError(msg) {

@@ -95,9 +95,15 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
       </div>
       <div class="chat-title">
-        <div class="name">متجر إطارات البروفايل</div>
+        <div class="name">المتجر</div>
         <div class="status" id="store-coins">0 كوين</div>
       </div>
+    </div>
+    <div class="store-tabs">
+      <div class="store-tab active" data-type="frame">الإطارات</div>
+      <div class="store-tab" data-type="row_theme">ألوان الصف</div>
+      <div class="store-tab" data-type="name_theme">ألوان الاسم</div>
+      <div class="store-tab" data-type="bg_skin">الخلفيات</div>
     </div>
     <div class="store-grid" id="store-grid"></div>
     <div id="store-error" class="store-error"></div>
