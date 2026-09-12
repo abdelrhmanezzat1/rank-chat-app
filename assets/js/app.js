@@ -1088,12 +1088,52 @@ function renderProfile(data){
 
   const initial = (user.username || '').charAt(0).toUpperCase();
 
+  // VIP badge
+  let vipHtml = '';
+  if (user.vip_active && user.vip_tier) {
+    vipHtml = `<div class="profile-vip-badge" style="background:${user.vip_tier.frame_gradient_from}22; color:${user.vip_tier.frame_gradient_from}; border:1px solid ${user.vip_tier.frame_gradient_from}44;">
+      <span style="display:inline-flex;width:14px;height:14px;vertical-align:middle">${ICONS.gem}</span> ${esc(user.vip_tier.name)}
+    </div>`;
+  }
+
+  // Profile song player
+  let songHtml = '';
+  if (user.profile_song_url) {
+    songHtml = `<div class="profile-song">
+      <audio id="profile-audio" src="${esc(user.profile_song_url)}" preload="none"></audio>
+      <button class="song-play-btn" id="song-play-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
+        تشغيل الأغنية
+      </button>
+    </div>`;
+  } else if (is_self) {
+    songHtml = `<div class="profile-song">
+      <input type="text" id="song-url-input" placeholder="رابط أغنية (mp3/ogg)" style="width:100%;padding:8px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:12px;margin-bottom:6px;">
+      <button class="frame-btn equip" onclick="saveProfileSong()" style="font-size:11px;padding:6px;">حفظ الأغنية</button>
+    </div>`;
+  }
+
+  // Like button
+  let likeHtml = '';
+  if (!is_self) {
+    likeHtml = `<button class="profile-like-btn ${user.i_liked ? 'liked' : ''}" id="profile-like-btn" data-user-id="${user.id}" data-liked="${user.i_liked ? 1 : 0}">
+      <svg viewBox="0 0 24 24" fill="${user.i_liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span id="like-count">${user.likes_count || 0}</span>
+    </button>`;
+  } else {
+    likeHtml = `<div class="profile-like-count">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="color:var(--owner)"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      ${user.likes_count || 0} إعجاب
+    </div>`;
+  }
+
   let actionsHtml = '';
   if (!is_self) {
     const followLabel = we_follow ? 'متابَع ✓' : 'متابعة';
     const followClass = we_follow ? 'follow-btn following' : 'follow-btn';
     actionsHtml = `
       <div class="profile-actions">
+        ${likeHtml}
         <button class="${followClass}" id="profile-follow-btn" data-user-id="${user.id}" data-following="${we_follow ? 1 : 0}">
           ${followLabel}
         </button>
@@ -1102,6 +1142,8 @@ function renderProfile(data){
         </button>
       </div>
     `;
+  } else {
+    actionsHtml = `<div class="profile-actions" style="justify-content:center">${likeHtml}</div>`;
   }
 
   let giftsHtml = '';
@@ -1111,7 +1153,7 @@ function renderProfile(data){
       <div class="profile-gifts">
         ${recent_gifts.map(g => `
           <div class="profile-gift-item">
-            <div class="gift-icon">${g.icon}</div>
+            <div class="gift-icon">${GIFT_ICONS[g.icon] || g.icon}</div>
             <div class="gift-from">من ${esc(g.sender_name)}</div>
           </div>
         `).join('')}
@@ -1119,16 +1161,54 @@ function renderProfile(data){
     `;
   }
 
+  // Wall posts
+  const wallPosts = user.wall_posts || [];
+  let wallHtml = `
+    <div class="profile-wall">
+      <div class="profile-wall-title">الجدار (${wallPosts.length})</div>
+      ${is_self ? `
+        <div class="wall-compose">
+          <input type="text" id="wall-input" placeholder="اكتب משהו على الجدار…" maxlength="500">
+          <button class="send-btn" onclick="postWall(${user.id})" style="width:32px;height:32px;min-width:32px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0D1220" stroke-width="2.2" width="14" height="14"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+          </button>
+        </div>
+      ` : `
+        <div class="wall-compose">
+          <input type="text" id="wall-input" placeholder="اكتب على الجدار…" maxlength="500">
+          <button class="send-btn" onclick="postWall(${user.id})" style="width:32px;height:32px;min-width:32px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0D1220" stroke-width="2.2" width="14" height="14"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+          </button>
+        </div>
+      `}
+      <div id="wall-posts">
+        ${wallPosts.length === 0 ? '<div class="loading-hint">مفيش منشورات</div>' : wallPosts.map(p => `
+          <div class="wall-post" data-id="${p.id}">
+            <div class="wall-post-header">
+              <span class="wall-post-author" style="color:${esc(p.rank_color || '#8891A8')}">${esc(p.author_id == user.id ? 'المالك' : p.username)}</span>
+              <span class="wall-post-time">${timeSince(new Date(p.created_at))}</span>
+              ${(p.author_id == ME_ID || ME_RANK === 'owner' || ME_RANK === 'admin') ? `<button class="wall-post-delete" onclick="deleteWallPost(${p.id})">×</button>` : ''}
+            </div>
+            <div class="wall-post-content">${esc(p.content)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
   el.innerHTML = `
     <div class="profile-header">
       <div class="profile-avatar" style="${frameStyle}">${initial}</div>
       <div class="profile-name">${esc(user.username)}</div>
       <div class="profile-username">@${esc(user.username)}</div>
+      ${vipHtml}
       <div class="profile-rank" style="background:${rc}22; color:${rc}; border:1px solid ${rc}44;">
         <span style="display:inline-flex;width:14px;height:14px;vertical-align:middle">${rankIcons[user.rank_key] || ICONS.user}</span> ${user.rank_label || user.rank_key}
       </div>
       <div class="profile-level">المستوى ${user.level} • ${user.xp} XP</div>
     </div>
+
+    ${songHtml}
 
     <div class="profile-stats">
       <div class="profile-stat">
@@ -1154,6 +1234,8 @@ function renderProfile(data){
     ${actionsHtml}
 
     ${giftsHtml}
+
+    ${wallHtml}
   `;
 
   // Follow button handler
@@ -1178,6 +1260,61 @@ function renderProfile(data){
       } catch(e){ showToast(e.message, 'error'); }
     });
   }
+
+  // Like button handler
+  const likeBtn = document.getElementById('profile-like-btn');
+  if (likeBtn) {
+    likeBtn.addEventListener('click', async () => {
+      const isLiked = likeBtn.dataset.liked === '1';
+      try {
+        const res = await api('like.php', { method:'POST', body: JSON.stringify({ user_id: user.id }) });
+        likeBtn.dataset.liked = res.liked ? '1' : '0';
+        likeBtn.classList.toggle('liked', res.liked);
+        const svg = likeBtn.querySelector('svg');
+        svg.setAttribute('fill', res.liked ? 'currentColor' : 'none');
+        document.getElementById('like-count').textContent = res.count;
+      } catch(e){ showToast(e.message, 'error'); }
+    });
+  }
+
+  // Song play handler
+  const songBtn = document.getElementById('song-play-btn');
+  const audio = document.getElementById('profile-audio');
+  if (songBtn && audio) {
+    songBtn.addEventListener('click', () => {
+      if (audio.paused) { audio.play(); songBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> إيقاف'; }
+      else { audio.pause(); songBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg> تشغيل الأغنية'; }
+    });
+  }
+}
+
+async function postWall(userId) {
+  const input = document.getElementById('wall-input');
+  if (!input || !input.value.trim()) return;
+  try {
+    await api('wall_post.php', { method:'POST', body: JSON.stringify({ user_id: userId, content: input.value.trim() }) });
+    input.value = '';
+    openProfile(userId);
+    showToast('تم النشر', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteWallPost(postId) {
+  try {
+    await api('wall_delete.php', { method:'POST', body: JSON.stringify({ post_id: postId }) });
+    document.querySelector(`.wall-post[data-id="${postId}"]`)?.remove();
+    showToast('تم الحذف', 'info');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function saveProfileSong() {
+  const input = document.getElementById('song-url-input');
+  if (!input || !input.value.trim()) return;
+  try {
+    await api('profile_song.php', { method:'POST', body: JSON.stringify({ song_url: input.value.trim() }) });
+    showToast('تم حفظ الأغنية', 'success');
+    openProfile(ME_ID);
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 /* ===== Mic room (large circular seats) ===== */
@@ -1594,3 +1731,195 @@ document.addEventListener('visibilitychange', () => {
     }
   }
 });
+
+/* ===== Announcements Banner ===== */
+function loadAnnouncements() {
+  api('announcements.php').then(list => {
+    const el = document.getElementById('announcements-banner');
+    if (!el || list.length === 0) return;
+    el.innerHTML = list.map(a => `
+      <div class="announcement-banner" style="background:var(--admin)15;border:1px solid var(--admin)44;border-radius:10px;padding:10px 14px;margin:8px 14px 0;">
+        <div style="font-weight:700;font-size:12px;color:var(--admin);margin-bottom:2px;">${esc(a.title)}</div>
+        <div style="font-size:11px;color:var(--text);">${esc(a.content)}</div>
+      </div>
+    `).join('');
+  }).catch(() => {});
+}
+loadAnnouncements();
+setInterval(loadAnnouncements, 60000);
+
+/* ===== News Feed ===== */
+document.querySelector('[data-tab="news"]')?.addEventListener('click', () => {
+  document.getElementById('news-screen').classList.add('open');
+  loadNews();
+});
+document.getElementById('news-back')?.addEventListener('click', () => document.getElementById('news-screen').classList.remove('open'));
+
+async function loadNews() {
+  const el = document.getElementById('news-list');
+  el.innerHTML = skeleton(4);
+  try {
+    const data = await api('news.php');
+    document.getElementById('news-count').textContent = `${data.articles.length} خبر`;
+    if (data.articles.length === 0) {
+      el.innerHTML = '<div class="loading-hint">مفيش أخبار لسه</div>';
+      return;
+    }
+    el.innerHTML = data.articles.map(a => `
+      <div style="background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted-2);margin-bottom:4px;">${esc(a.category)} • ${timeSince(new Date(a.created_at))}</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">${esc(a.title)}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;">${esc(a.content)}</div>
+        ${a.author_name ? `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">بقلم: ${esc(a.author_name)}</div>` : ''}
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="loading-hint">تعذر تحميل الأخبار</div>';
+  }
+}
+
+/* ===== VIP Store ===== */
+document.getElementById('open-vip')?.addEventListener('click', () => {
+  document.getElementById('vip-screen').classList.add('open');
+  loadVipTiers();
+});
+document.getElementById('vip-back')?.addEventListener('click', () => document.getElementById('vip-screen').classList.remove('open'));
+
+async function loadVipTiers() {
+  const el = document.getElementById('vip-list');
+  el.innerHTML = skeleton(3);
+  try {
+    const data = await api('vip_tiers.php');
+    if (data.my_vip.active) {
+      document.getElementById('vip-status').textContent = `نشط حتى ${data.my_vip.expires_at}`;
+    }
+    el.innerHTML = data.tiers.map(t => `
+      <div class="frame-card" style="margin-bottom:10px;">
+        <div style="width:48px;height:48px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,${esc(t.frame_gradient_from)},${esc(t.frame_gradient_to)});border:3px solid ${esc(t.frame_gradient_from)};"></div>
+        <div class="frame-name">${esc(t.name)}</div>
+        <div class="frame-rarity">${t.duration_days} يوم</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">${esc(t.perks || '')}</div>
+        <button class="frame-btn buy" onclick="buyVip(${t.id}, ${t.price_coins}, '${esc(t.name)}')" ${data.my_vip.active && data.my_vip.tier_id == t.id ? 'disabled style="opacity:.5"' : ''}>
+          ${data.my_vip.active && data.my_vip.tier_id == t.id ? 'نشط حاليًا' : `شراء (${t.price_coins} ${COIN_SVG})`}
+        </button>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="loading-hint">تعذر تحميل باقات VIP</div>';
+  }
+}
+
+async function buyVip(tierId, price, name) {
+  if (!confirm(`شراء ${name} بـ ${price} كوين؟`)) return;
+  try {
+    const res = await api('buy_vip.php', { method:'POST', body: JSON.stringify({ tier_id: tierId }) });
+    showToast(`تم تفعيل ${name}!`, 'success');
+    const me = await api('me.php');
+    document.getElementById('my-coins').textContent = `${me.coins} ${COIN_SVG}`;
+    loadVipTiers();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+/* ===== Security Panel (Admin) ===== */
+document.getElementById('open-security')?.addEventListener('click', () => {
+  document.getElementById('security-screen').classList.add('open');
+  loadSecurityPanel();
+});
+document.getElementById('security-back')?.addEventListener('click', () => document.getElementById('security-screen').classList.remove('open'));
+
+let securityTab = 'devices';
+document.querySelectorAll('[data-sec-tab]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-sec-tab]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    securityTab = tab.dataset.secTab;
+    loadSecurityPanel();
+  });
+});
+
+async function loadSecurityPanel() {
+  const el = document.getElementById('security-content');
+  el.innerHTML = skeleton(4);
+  try {
+    const data = await api('security_panel.php');
+
+    if (securityTab === 'devices') {
+      el.innerHTML = data.fingerprints.length === 0 ? '<div class="loading-hint">مفيش أجهزة مسجلة</div>' :
+        data.fingerprints.map(f => `
+          <div style="padding:10px 0;border-bottom:1px solid var(--line);">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:12px;font-weight:600;color:var(--text);">${esc(f.username)}</div>
+              <button onclick="banDevice('${esc(f.fingerprint)}','${esc(f.ip_address)}')" style="padding:4px 8px;border-radius:6px;border:none;background:var(--owner);color:#fff;font-size:10px;cursor:pointer;">حظر</button>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">IP: ${esc(f.ip_address || 'N/A')} | FP: ${esc((f.fingerprint||'').substring(0,20))}...</div>
+            <div style="font-size:10px;color:var(--muted-2);">آخر ظهور: ${timeSince(new Date(f.last_seen))}</div>
+          </div>
+        `).join('');
+    } else if (securityTab === 'alts') {
+      el.innerHTML = data.alt_groups.length === 0 ? '<div class="loading-hint">مفيش حسابات مزيفة</div>' :
+        data.alt_groups.map(g => `
+          <div style="padding:10px 0;border-bottom:1px solid var(--line);">
+            <div style="font-size:12px;font-weight:600;color:var(--owner);">جهاز مشترك (${g.user_count} حسابات)</div>
+            <div style="font-size:11px;color:var(--text);margin-top:4px;">${esc(g.usernames)}</div>
+            <div style="font-size:10px;color:var(--muted-2);margin-top:2px;">FP: ${esc((g.fingerprint||'').substring(0,30))}...</div>
+          </div>
+        `).join('');
+    } else if (securityTab === 'spam') {
+      el.innerHTML = data.spam_logs.length === 0 ? '<div class="loading-hint">مفيش سبام مسجل</div>' :
+        data.spam_logs.map(s => `
+          <div style="padding:10px 0;border-bottom:1px solid var(--line);">
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:12px;font-weight:600;color:var(--text);">${esc(s.username)}</span>
+              <span style="font-size:10px;color:var(--owner);">${esc(s.reason)}</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">${esc((s.message_content||'').substring(0,100))}</div>
+            <div style="font-size:10px;color:var(--muted-2);">${timeSince(new Date(s.created_at))}</div>
+          </div>
+        `).join('');
+    } else if (securityTab === 'words') {
+      el.innerHTML = `
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <input type="text" id="ban-word-input" placeholder="كلمة محظورة جديدة" style="flex:1;padding:8px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:12px;">
+          <button onclick="addBannedWord()" style="padding:8px 14px;border-radius:8px;border:none;background:var(--admin);color:#0D1220;font-size:12px;font-weight:700;cursor:pointer;">إضافة</button>
+        </div>
+        ${data.banned_words.map(w => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);">
+            <span style="font-size:12px;color:var(--text);">${esc(w.word)} ${w.is_regex ? '<span style="color:var(--muted-2);font-size:10px;">(regex)</span>' : ''}</span>
+            <button onclick="deleteBannedWord(${w.id})" style="padding:4px 8px;border-radius:6px;border:none;background:var(--owner);color:#fff;font-size:10px;cursor:pointer;">حذف</button>
+          </div>
+        `).join('')}
+      `;
+    }
+  } catch(e) {
+    el.innerHTML = '<div class="loading-hint">تعذر تحميل بيانات الأمان</div>';
+  }
+}
+
+async function banDevice(fp, ip) {
+  const reason = prompt('سبب حظر الجهاز:');
+  if (reason === null) return;
+  try {
+    await api('device_ban.php', { method:'POST', body: JSON.stringify({ fingerprint: fp, ip_address: ip, reason: reason || 'محظور من الإدارة' }) });
+    showToast('تم حظر الجهاز', 'success');
+    loadSecurityPanel();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function addBannedWord() {
+  const input = document.getElementById('ban-word-input');
+  if (!input || !input.value.trim()) return;
+  try {
+    await api('manage_banned_words.php', { method:'POST', body: JSON.stringify({ action:'add', word: input.value.trim() }) });
+    input.value = '';
+    loadSecurityPanel();
+    showToast('تمت الإضافة', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteBannedWord(id) {
+  try {
+    await api('manage_banned_words.php', { method:'POST', body: JSON.stringify({ action:'delete', id }) });
+    loadSecurityPanel();
+    showToast('تم الحذف', 'info');
+  } catch(e) { showToast(e.message, 'error'); }
+}

@@ -77,4 +77,32 @@ if ($elapsed >= 30) {
     }
 }
 
-echo json_encode(['success' => true, 'id' => $msgId, 'sent_at' => date('Y-m-d H:i:s')]);
+// Monitor bot: check banned words and spam patterns
+$flags = [];
+$contentLower = mb_strtolower($content);
+
+$bannedWords = db()->prepare("SELECT word, is_regex FROM banned_words");
+$bannedWords->execute([]);
+foreach ($bannedWords->fetchAll() as $w) {
+    if ($w['is_regex']) {
+        if (@preg_match($w['word'], $contentLower)) $flags[] = 'banned_word:' . $w['word'];
+    } else {
+        if (mb_strpos($contentLower, mb_strtolower($w['word'])) !== false) $flags[] = 'banned_word:' . $w['word'];
+    }
+}
+
+$spamCheck = db()->prepare("SELECT COUNT(*) FROM messages WHERE sender_id = ? AND content = ? AND created_at > DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
+$spamCheck->execute([$me['id'], $content]);
+if ($spamCheck->fetchColumn() >= 3) $flags[] = 'spam_repeat';
+
+$rapidCheck = db()->prepare("SELECT COUNT(*) FROM messages WHERE sender_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL 30 SECOND)");
+$rapidCheck->execute([$me['id']]);
+if ($rapidCheck->fetchColumn() >= 10) $flags[] = 'spam_rapid';
+
+if (!empty($flags)) {
+    $flagReason = implode('; ', $flags);
+    db()->prepare("INSERT INTO spam_log (user_id, message_content, reason) VALUES (?, ?, ?)")->execute([$me['id'], mb_substr($content, 0, 200), $flagReason]);
+    db()->prepare("INSERT INTO mod_log (moderator_id, target_id, action, reason) VALUES (0, ?, 'auto_flag', ?)")->execute([$me['id'], $flagReason]);
+}
+
+echo json_encode(['success' => true, 'id' => $msgId, 'sent_at' => date('Y-m-d H:i:s'), 'flagged' => !empty($flags)]);

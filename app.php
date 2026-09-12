@@ -56,6 +56,7 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
         <div class="tab sub-tab" data-tab="voice">المايك</div>
         <div class="tab sub-tab" data-tab="top">الأكثر ترتيباً</div>
         <div class="tab sub-tab" data-tab="search">بحث</div>
+        <div class="tab sub-tab" data-tab="news">أخبار</div>
       </div>
       <div class="tabs" style="margin-top:6px;">
         <div class="tab active" data-filter="all">الكل</div>
@@ -67,6 +68,9 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
         <div class="theme-btn theme-aurora" data-theme="aurora" title="أوريلا"></div>
       </div>
     </div>
+
+    <!-- Announcements Banner -->
+    <div id="announcements-banner"></div>
 
     <div class="rank-scroll" id="rank-list">
       <div class="loading-hint">جاري تحميل الأعضاء…</div>
@@ -83,6 +87,16 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
       غرفة المايك العامة
       <span style="margin-inline-start:auto; color:var(--muted-2);" id="mic-count">0 على المايك</span>
     </div>
+    <div class="store-chip" id="open-vip" style="margin-top:0;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:var(--gold)"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/></svg>
+      اشتراك VIP
+    </div>
+    <?php if (in_array($me['rank_key'], ['owner', 'admin'])): ?>
+    <div class="store-chip" id="open-security" style="margin-top:0;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg>
+      الأمان والمراقبة
+    </div>
+    <?php endif; ?>
   </div>
 
   <!-- ===== شاشة الشات ===== -->
@@ -232,6 +246,53 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
       </div>
     </div>
     <div id="mod-menu-items"></div>
+  </div>
+
+  <!-- News Screen -->
+  <div class="chat-screen" id="news-screen">
+    <div class="chat-topbar">
+      <div class="chat-back" id="news-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="chat-title">
+        <div class="name">الأخبار</div>
+        <div class="status" id="news-count">0 خبر</div>
+      </div>
+    </div>
+    <div id="news-list" style="flex:1;overflow-y:auto;padding:14px;"></div>
+  </div>
+
+  <!-- VIP Store Screen -->
+  <div class="chat-screen" id="vip-screen">
+    <div class="chat-topbar">
+      <div class="chat-back" id="vip-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="chat-title">
+        <div class="name">اشتراك VIP</div>
+        <div class="status" id="vip-status">غير مشترك</div>
+      </div>
+    </div>
+    <div id="vip-list" style="flex:1;overflow-y:auto;padding:14px;"></div>
+  </div>
+
+  <!-- Security Panel (Admin) -->
+  <div class="chat-screen" id="security-screen">
+    <div class="chat-topbar">
+      <div class="chat-back" id="security-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="chat-title">
+        <div class="name">الأمان والمراقبة</div>
+      </div>
+    </div>
+    <div class="admin-tabs">
+      <div class="store-tab active" data-sec-tab="devices">الأجهزة</div>
+      <div class="store-tab" data-sec-tab="alts">حسابات مزيفة</div>
+      <div class="store-tab" data-sec-tab="spam">سبام</div>
+      <div class="store-tab" data-sec-tab="words">كلمات محظورة</div>
+    </div>
+    <div id="security-content" style="flex:1;overflow-y:auto;padding:14px;"></div>
   </div>
 
 </div>

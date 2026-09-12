@@ -40,6 +40,48 @@ $stmt = db()->prepare("SELECT IFNULL(SUM(amount), 0) FROM transactions WHERE use
 $stmt->execute([$targetId]);
 $user['total_coins_earned'] = (int)$stmt->fetchColumn();
 
+// Likes count
+$stmt = db()->prepare("SELECT COUNT(*) FROM profile_likes WHERE user_id = ?");
+$stmt->execute([$targetId]);
+$user['likes_count'] = (int)$stmt->fetchColumn();
+
+// Check if current user liked this profile
+$stmt = db()->prepare("SELECT 1 FROM profile_likes WHERE user_id = ? AND liker_id = ?");
+$stmt->execute([$targetId, $me['id']]);
+$user['i_liked'] = (bool)$stmt->fetch();
+
+// VIP info
+$stmt = db()->prepare("SELECT vip_expires_at, vip_tier_id FROM users WHERE id = ?");
+$stmt->execute([$targetId]);
+$vip = $stmt->fetch();
+$user['vip_active'] = $vip['vip_expires_at'] && strtotime($vip['vip_expires_at']) > time();
+$user['vip_expires_at'] = $vip['vip_expires_at'];
+$user['vip_tier_id'] = $vip['vip_tier_id'];
+
+if ($user['vip_active'] && $vip['vip_tier_id']) {
+    $stmt = db()->prepare("SELECT name, frame_gradient_from, frame_gradient_to, badge_icon FROM vip_tiers WHERE id = ?");
+    $stmt->execute([$vip['vip_tier_id']]);
+    $user['vip_tier'] = $stmt->fetch();
+} else {
+    $user['vip_tier'] = null;
+}
+
+// Profile song
+$user['profile_song_url'] = $user['profile_song_url'] ?? null;
+
+// Wall posts
+$stmt = db()->prepare("
+    SELECT wp.id, wp.content, wp.created_at, u.id as author_id, u.username, u.rank_key, r.color_hex as rank_color
+    FROM wall_posts wp
+    JOIN users u ON wp.author_id = u.id
+    LEFT JOIN ranks r ON u.rank_key = r.`key`
+    WHERE wp.user_id = ?
+    ORDER BY wp.created_at DESC
+    LIMIT 20
+");
+$stmt->execute([$targetId]);
+$user['wall_posts'] = $stmt->fetchAll();
+
 // Check if we follow them
 $stmt = db()->prepare("SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?");
 $stmt->execute([$me['id'], $targetId]);
