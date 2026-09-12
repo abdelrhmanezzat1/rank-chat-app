@@ -7,9 +7,131 @@ const ICONS = {
   gem:    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/></svg>',
   star:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7-6.2-3.6L5.8 21l1.4-7L2 9.3l7-.8L12 2z"/></svg>',
   user:   '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>',
+  wrench: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 9V2h12v7a6 6 0 0 1-12 0z"/><path d="M4 15h16v2a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-2z"/><path d="M10 2v3M14 2v3"/></svg>',
+  medal:  '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="16" r="6"/><path d="M8 2l4 8 4-8"/></svg>',
+  award:  '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>',
 };
 
+const NOTIF_ICONS = {
+  message: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  gift:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8v12"/><path d="M5 8c0-2.2 1.8-4 4-4h6c2.2 0 4 1.8 4 4"/><path d="M5 8h14"/></svg>',
+  follow:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7"/></svg>',
+  mic:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 19v3"/></svg>',
+  bell:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+};
+
+const MOD_ICONS = {
+  mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg>',
+  kick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 22V12h6"/><path d="M22 12L12 2 2 12"/></svg>',
+  ban:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
+  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+};
+
+const RANK_ICONS = {
+  owner:'crown', admin:'shield', manager:'wrench', diamond:'gem', gold:'trophy',
+  silver:'medal', bronze:'award', 'golden-blue':'star', normal:'user',
+};
+
+const COIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M9 14h6"/></svg>';
+
 const RANK_ORDER = ['owner','admin','diamond','gold','silver','bronze','member'];
+
+/* ===== Animated Background ===== */
+function initBackground(){
+  // Layer 1: Twinkling stars
+  const starsEl = document.getElementById('bg-stars');
+  if (starsEl) {
+    for (let i = 0; i < 55; i++){
+      const s = document.createElement('div');
+      s.className = 'bg-star';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 100 + '%';
+      s.style.setProperty('--tw-dur', (2 + Math.random() * 3) + 's');
+      s.style.setProperty('--tw-delay', (Math.random() * 5) + 's');
+      starsEl.appendChild(s);
+    }
+  }
+
+  // Layer 2: Drifting glow orbs
+  const orbsEl = document.getElementById('bg-orbs');
+  if (orbsEl) {
+    const orbSizes = [160, 200, 140, 240];
+    for (let i = 0; i < 4; i++){
+      const o = document.createElement('div');
+      o.className = 'bg-orb';
+      const size = orbSizes[i];
+      o.style.width = size + 'px';
+      o.style.height = size + 'px';
+      o.style.left = (10 + Math.random() * 70) + '%';
+      o.style.top = (10 + Math.random() * 70) + '%';
+      o.style.background = `radial-gradient(circle, var(--orb-${i+1}), transparent 70%)`;
+      o.style.setProperty('--orb-dur', (14 + Math.random() * 8) + 's');
+      o.style.setProperty('--orb-delay', (Math.random() * 6) + 's');
+      o.style.setProperty('--orb-dx', (20 + Math.random() * 40) + 'px');
+      o.style.setProperty('--orb-dy', (15 + Math.random() * 30) + 'px');
+      o.style.setProperty('--orb-scale', (0.8 + Math.random() * 0.6).toFixed(2));
+      orbsEl.appendChild(o);
+    }
+  }
+
+  // Layer 3: Rising particles
+  const partEl = document.getElementById('bg-particles');
+  if (partEl) {
+    const colors = ['var(--orb-1)','var(--orb-2)','var(--orb-3)','var(--orb-4)'];
+    for (let i = 0; i < 25; i++){
+      const p = document.createElement('div');
+      p.className = 'bg-particle';
+      p.style.setProperty('--p-size', (2 + Math.random() * 3) + 'px');
+      p.style.setProperty('--p-color', colors[Math.floor(Math.random() * colors.length)]);
+      p.style.setProperty('--p-x', (Math.random() * 100) + '%');
+      p.style.setProperty('--p-dur', (8 + Math.random() * 10) + 's');
+      p.style.setProperty('--p-delay', (Math.random() * 12) + 's');
+      p.style.setProperty('--p-drift', (Math.random() * 60 - 30) + 'px');
+      partEl.appendChild(p);
+    }
+  }
+
+  // Layer 4: Occasional shooting stars
+  const metEl = document.getElementById('bg-meteors');
+  if (metEl) {
+    for (let i = 0; i < 3; i++){
+      const m = document.createElement('div');
+      m.className = 'bg-meteor';
+      m.style.setProperty('--m-w', (60 + Math.random() * 80) + 'px');
+      m.style.setProperty('--m-top', (5 + Math.random() * 25) + '%');
+      m.style.setProperty('--m-left', (10 + Math.random() * 60) + '%');
+      m.style.setProperty('--m-dur', (1.5 + Math.random() * 1.5) + 's');
+      m.style.setProperty('--m-delay', (3 + Math.random() * 8 + i * 5) + 's');
+      m.style.setProperty('--m-angle', (-25 - Math.random() * 15) + 'deg');
+      m.style.setProperty('--m-dist', (200 + Math.random() * 150) + 'px');
+      m.style.setProperty('--m-fall', (80 + Math.random() * 60) + 'px');
+      metEl.appendChild(m);
+    }
+  }
+}
+
+/* ===== Theme System ===== */
+function initTheme(){
+  const saved = localStorage.getItem('chat-theme') || 'night';
+  applyTheme(saved);
+}
+
+function applyTheme(theme){
+  document.body.classList.remove('theme-night','theme-purple','theme-aurora');
+  if (theme === 'purple') document.body.classList.add('theme-purple');
+  else if (theme === 'aurora') document.body.classList.add('theme-aurora');
+  else document.body.classList.add('theme-night');
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+  localStorage.setItem('chat-theme', theme);
+}
+
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+});
+
+initBackground();
+initTheme();
 
 let currentFilter = 'all';
 let currentTab = 'members';
@@ -108,12 +230,12 @@ async function loadNotifications(){
       const div = document.createElement('div');
       div.className = 'notif-item' + (n.is_read == 0 ? ' unread' : '');
 
-      const icons = { message:'💬', gift:'🎁', follow:'👤', mic:'🎙' };
-      const icon = icons[n.type] || '🔔';
+      const icons = NOTIF_ICONS;
+      const icon = icons[n.type] || icons.bell;
       const timeAgo = timeSince(new Date(n.created_at));
 
       div.innerHTML = `
-        <div class="notif-icon">${icon}</div>
+        <div class="notif-icon" style="color:${n.type === 'gift' ? 'var(--gold)' : n.type === 'follow' ? 'var(--admin)' : n.type === 'mic' ? '#3CCB6F' : 'var(--muted)'}">${icon}</div>
         <div class="notif-body">
           <div class="notif-title">${esc(n.title)}</div>
           <div class="notif-text">${esc(n.body || '')}</div>
@@ -187,20 +309,20 @@ function openModMenu(userId, username, rankKey){
   if (canMute && !isTarget) {
     items.innerHTML += `
       <div class="mod-menu-item" onclick="modAction('mute', ${userId}, '${esc(username)}', 30)">
-        <span class="mod-icon">🔇</span> كتم 30 دقيقة
+        <span class="mod-icon">${MOD_ICONS.mute}</span> كتم 30 دقيقة
       </div>
       <div class="mod-menu-item" onclick="modAction('mute', ${userId}, '${esc(username)}', 60)">
-        <span class="mod-icon">🔇</span> كتم ساعة
+        <span class="mod-icon">${MOD_ICONS.mute}</span> كتم ساعة
       </div>
       <div class="mod-menu-item" onclick="modAction('kick', ${userId}, '${esc(username)}')">
-        <span class="mod-icon">👋</span> طرد
+        <span class="mod-icon">${MOD_ICONS.kick}</span> طرد
       </div>
     `;
   }
   if (canBan && !isTarget) {
     items.innerHTML += `
       <div class="mod-menu-item danger" onclick="modAction('ban', ${userId}, '${esc(username)}')">
-        <span class="mod-icon">🚫</span> حظر
+        <span class="mod-icon">${MOD_ICONS.ban}</span> حظر
       </div>
     `;
   }
@@ -300,7 +422,7 @@ function renderAdminUsers(data, el){
     <div id="admin-user-list">
       ${data.users.map(u => `
         <div class="admin-user-row">
-          <div class="au-name">${esc(u.username)} ${u.is_online == 1 ? '🟢' : ''} ${u.is_muted == 1 ? '🔇' : ''}</div>
+          <div class="au-name">${esc(u.username)} ${u.is_online == 1 ? '<svg viewBox="0 0 24 24" fill="#3CCB6F" width="10" height="10" style="vertical-align:middle"><circle cx="12" cy="12" r="6"/></svg>' : ''} ${u.is_muted == 1 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10" style="vertical-align:middle"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg>' : ''}</div>
           <div class="au-rank" style="background:${u.color_hex}22;color:${u.color_hex}">${esc(u.rank_label)}</div>
           ${ME_RANK === 'owner' ? `
           <select onchange="changeRank(${u.id}, this.value)">
@@ -477,7 +599,7 @@ function renderList(){
             <span class="${nameClass}" ${nameStyle}>${esc(u.username)}</span>
             ${levelHtml}
           </div>
-          <div class="user-sub">${u.is_online == 1 ? (u.on_mic > 0 ? '🎙 على المايك' : 'متصل الآن') : 'غير متصل'}</div>
+          <div class="user-sub">${u.is_online == 1 ? (u.on_mic > 0 ? `<span style="display:inline-flex;width:12px;height:12px;vertical-align:middle;margin-inline-start:2px">${NOTIF_ICONS.mic}</span> على المايك` : 'متصل الآن') : 'غير متصل'}</div>
         </div>
         <button class="user-profile-btn" onclick="event.stopPropagation(); openProfile(${u.id})" title="عرض البروفايل">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7"/></svg>
@@ -496,7 +618,7 @@ function renderList(){
   });
 }
 
-function micSvg(){ return '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#0D1220" stroke-width="3"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/></svg>'; }
+function micSvg(){ return '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/></svg>'; }
 function esc(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
 /* ===== Tab switching ===== */
@@ -559,7 +681,7 @@ function renderMessages(messages){
   const body = document.getElementById('chat-body');
   body.innerHTML = '';
   if (messages.length === 0) {
-    body.innerHTML = '<div class="loading-hint">مفيش رسائل لسه، ابدأ المحادثة 👋</div>';
+    body.innerHTML = '<div class="loading-hint">مفيش رسائل لسه، ابدأ المحادثة</div>';
     return;
   }
   messages.forEach(m => appendBubble(m));
@@ -575,7 +697,7 @@ function appendBubble(m){
 
   let html = m.content;
   if (m.sender_id != ME_ID) {
-    html += `<button class="bubble-report-btn" onclick="event.stopPropagation(); reportUser(${m.sender_id}, ${m.id || 0})" title="الإبلاغ">⚠️</button>`;
+    html += `<button class="bubble-report-btn" onclick="event.stopPropagation(); reportUser(${m.sender_id}, ${m.id || 0})" title="الإبلاغ">${MOD_ICONS.warn}</button>`;
   }
   bubble.innerHTML = html;
   body.appendChild(bubble);
@@ -648,7 +770,7 @@ async function openGiftPanel(){
   // Load user balance
   try {
     const me = await api('me.php');
-    document.getElementById('gift-balance').textContent = `رصيدك: ${me.coins} 🪙`;
+    document.getElementById('gift-balance').textContent = `رصيدك: ${me.coins} ${COIN_SVG}`;
   } catch(e){}
 
   renderGifts();
@@ -662,9 +784,9 @@ function renderGifts(){
     const div = document.createElement('div');
     div.className = `gift-item ${g.rarity}`;
     div.innerHTML = `
-      <div class="gift-icon">${g.icon}</div>
+      <div class="gift-icon">${GIFT_ICONS[g.icon] || g.icon}</div>
       <div class="gift-name">${esc(g.name)}</div>
-      <div class="gift-price">${g.price} 🪙</div>
+      <div class="gift-price">${g.price} ${COIN_SVG}</div>
     `;
     div.addEventListener('click', () => sendGift(g));
     list.appendChild(div);
@@ -684,8 +806,8 @@ async function sendGift(gift){
       })
     });
     const me = await api('me.php');
-    document.getElementById('my-coins').textContent = `${me.coins} 🪙`;
-    document.getElementById('gift-balance').textContent = `رصيدك: ${me.coins} 🪙`;
+    document.getElementById('my-coins').textContent = `${me.coins} ${COIN_SVG}`;
+    document.getElementById('gift-balance').textContent = `رصيدك: ${me.coins} ${COIN_SVG}`;
     closeGiftPanel();
     showToast(`تم إرسال ${gift.icon} ${gift.name}`, 'success');
   } catch(e){
@@ -737,6 +859,29 @@ async function loadEffects(){
   } catch(e){}
 }
 
+const EFFECT_ICONS = {
+  '🔥': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#FF5C7A"><path d="M12 23c-4.97 0-8-3.58-8-8 0-4.5 3.5-8.5 6-11 .5-.5 1.5.1 1.4.7-.2 1.2.8 2.3 2 2.3.4 0 .7-.3.7-.7 0-.5.4-.8.8-.5C17.5 9.5 20 13 20 15c0 4.42-3.03 8-8 8z"/></svg>',
+  '✨': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#FFC94A"><path d="M12 2l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"/></svg>',
+  '🌧': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#4A9EFF"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><path d="M8 19v2M8 13v2M16 19v2M16 13v2M12 21v2M12 15v2"/></svg>',
+  '⭐': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#FFC94A"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7-6.2-3.6L5.8 21l1.4-7L2 9.3l7-.8L12 2z"/></svg>',
+  '🎈': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#FF6B9D"><ellipse cx="12" cy="10" rx="6" ry="8"/><path d="M12 18v3M9 21h6"/></svg>',
+  '🌈': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 17a10 10 0 0 1 20 0"/><path d="M6 17a6 6 0 0 1 12 0"/><path d="M10 17a2 2 0 0 1 4 0"/></svg>',
+  '💥': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#FF5C7A"><path d="M12 2l1.5 5 5 1.5-5 1.5-1.5 5-1.5-5-5-1.5 5-1.5L12 2z"/><path d="M5 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z" opacity=".5"/></svg>',
+  '💎': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#6FE3E0"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/></svg>',
+};
+
+/* ===== Gift Icons (DB has emoji, map to SVG) ===== */
+const GIFT_ICONS = {
+  '🌹': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#FF6B7A"><path d="M12 22c-4.97 0-8-2.69-8-6 0-4 6-8 8-8s8 4 8 8c0 3.31-3.03 6-8 6z"/><path d="M12 8V2M8 6l4-4 4 4"/></svg>',
+  '❤️': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#FF5C7A"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  '🎂': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#FFC94A"><path d="M12 6a6 6 0 0 0-6 6h12a6 6 0 0 0-6-6z"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M12 2v4M8 4v2M16 4v2"/></svg>',
+  '☕': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 2v3M10 2v3M14 2v3"/></svg>',
+  '📖': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  '🎵': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+  '💎': '<svg viewBox="0 0 24 24" fill="currentColor" style="color:#6FE3E0"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/></svg>',
+  '🎁': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8v12"/><path d="M5 8c0-2.2 1.8-4 4-4h6c2.2 0 4 1.8 4 4"/><path d="M5 8h14"/></svg>',
+};
+
 function renderEffects(){
   const grid = document.getElementById('effect-grid');
   grid.innerHTML = '';
@@ -744,9 +889,9 @@ function renderEffects(){
     const chip = document.createElement('div');
     chip.className = 'effect-chip' + (e.owned ? '' : ' locked') + (selectedEffectId == e.id ? ' active' : '');
     chip.innerHTML = `
-      <div class="effect-icon">${e.icon}</div>
+      <div class="effect-icon">${EFFECT_ICONS[e.icon] || e.icon}</div>
       <div class="effect-name">${esc(e.name)}</div>
-      ${e.owned ? '' : `<div class="effect-price">${e.price} 🪙</div>`}
+      ${e.owned ? '' : `<div class="effect-price">${e.price} ${COIN_SVG}</div>`}
     `;
     if (e.owned) {
       chip.addEventListener('click', () => {
@@ -761,11 +906,11 @@ function renderEffects(){
       });
     } else {
       chip.addEventListener('click', async () => {
-        if (confirm(`شراء تأثير "${e.name}" بـ ${e.price} 🪙؟`)) {
+        if (confirm(`شراء تأثير "${e.name}" بـ ${e.price} ${COIN_SVG}؟`)) {
           try {
             await api('buy_effect.php', { method:'POST', body: JSON.stringify({ effect_id: e.id }) });
             const me = await api('me.php');
-            document.getElementById('my-coins').textContent = `${me.coins} 🪙`;
+            document.getElementById('my-coins').textContent = `${me.coins} ${COIN_SVG}`;
             loadEffects();
           } catch(err){ alert(err.message); }
         }
@@ -798,7 +943,7 @@ async function openStore(){
   try {
     storeData = await api('store.php');
     document.getElementById('store-coins').textContent = `${storeData.coins} كوين`;
-    document.getElementById('my-coins').textContent = `${storeData.coins} 🪙`;
+    document.getElementById('my-coins').textContent = `${storeData.coins} ${COIN_SVG}`;
     renderStoreItems();
   } catch(e){}
 }
@@ -839,7 +984,7 @@ function renderStoreItems(){
     let btnHtml;
     if (item.equipped == 1) btnHtml = `<button class="frame-btn equipped" disabled>مفعّل حاليًا</button>`;
     else if (item.owned == 1) btnHtml = `<button class="frame-btn equip" data-id="${item.id}" data-type="${item.type}">تفعيل</button>`;
-    else btnHtml = `<button class="frame-btn buy" data-id="${item.id}" data-type="${item.type}">شراء (${item.price} 🪙)</button>`;
+    else btnHtml = `<button class="frame-btn buy" data-id="${item.id}" data-type="${item.type}">شراء (${item.price} ${COIN_SVG})</button>`;
 
     // Different preview based on type
     let previewHtml;
@@ -920,8 +1065,8 @@ function renderProfile(data){
   document.getElementById('profile-title').textContent = user.username;
 
   const rankIcons = {
-    owner:'🛡️', admin:'⭐', manager:'🔧', diamond:'💎', gold:'🥇',
-    silver:'🥈', bronze:'🥉', 'golden-blue':'✨', normal:'👤'
+    owner: ICONS.crown, admin: ICONS.shield, manager: ICONS.wrench, diamond: ICONS.gem,
+    gold: ICONS.trophy, silver: ICONS.medal, bronze: ICONS.award, 'golden-blue': ICONS.star, normal: ICONS.user
   };
 
   const rankNames = {
@@ -980,7 +1125,7 @@ function renderProfile(data){
       <div class="profile-name">${esc(user.username)}</div>
       <div class="profile-username">@${esc(user.username)}</div>
       <div class="profile-rank" style="background:${rc}22; color:${rc}; border:1px solid ${rc}44;">
-        ${user.rank_icon || '👤'} ${user.rank_label || user.rank_key}
+        <span style="display:inline-flex;width:14px;height:14px;vertical-align:middle">${rankIcons[user.rank_key] || ICONS.user}</span> ${user.rank_label || user.rank_key}
       </div>
       <div class="profile-level">المستوى ${user.level} • ${user.xp} XP</div>
     </div>
@@ -1097,7 +1242,7 @@ async function refreshMic(){
             </div>
             ${isMuted ? `<div class="mic-mute-badge">${mutedSvg()}</div>` : ''}
           </div>
-          <div class="mic-seat-number">${u.rank_icon === 'crown' ? '👑' : u.rank_icon === 'shield' ? '🛡' : u.rank_icon === 'gem' ? '💎' : ''} ${esc(u.username)}</div>
+          <div class="mic-seat-number"><span style="display:inline-flex;width:14px;height:14px;vertical-align:middle;margin-inline-start:2px;color:var(--text)">${ICONS[RANK_ICONS[u.rank_key] || 'user'] || ''}</span> ${esc(u.username)}</div>
         </div>`;
     }).join('');
 
@@ -1430,7 +1575,7 @@ document.getElementById('mic-mute-btn').addEventListener('click', () => voiceTog
 /* ===== Init ===== */
 loadUsers();
 let usersPollTimer = setInterval(loadUsers, 6000);
-api('store.php').then(d => document.getElementById('my-coins').textContent = `${d.coins} 🪙`).catch(()=>{});
+api('store.php').then(d => document.getElementById('my-coins').textContent = `${d.coins} ${COIN_SVG}`).catch(()=>{});
 
 let heartbeatTimer = setInterval(heartbeat, 8000);
 document.addEventListener('visibilitychange', () => {
